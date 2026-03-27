@@ -1,29 +1,32 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-
-const USERS_FILE = path.join(process.cwd(), 'src/data/users.json');
-
-async function getUsers() {
-  const data = await fs.readFile(USERS_FILE, 'utf8');
-  return JSON.parse(data);
-}
+import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
-    const users = await getUsers();
     
-    const user = users.find((u: any) => u.email === email && u.password === password);
+    // 1. Validate credentials against Turso
+    const result = await db.execute({
+      sql: 'SELECT * FROM users WHERE email = ? AND password = ?',
+      args: [email, password]
+    });
     
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: 'Invalid identification credentials' }, { status: 401 });
     }
     
-    // Don't return the password
-    const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json(userWithoutPassword);
-  } catch (error) {
-    return NextResponse.json({ error: 'Sign in failed' }, { status: 500 });
+    const user = result.rows[0];
+    
+    // 2. Return plain user object (without password)
+    return NextResponse.json({ 
+      id: user.id, 
+      name: user.name, 
+      email: user.email, 
+      phone: user.phone || '', 
+      role: user.role 
+    });
+  } catch (error: any) {
+    console.error('Sign-in Error:', error);
+    return NextResponse.json({ error: `Authentication failed: ${error.message}` }, { status: 500 });
   }
 }

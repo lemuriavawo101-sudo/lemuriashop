@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-
-const USERS_FILE = path.join(process.cwd(), 'src/data/users.json');
-
-async function getUsers() {
-  const data = await fs.readFile(USERS_FILE, 'utf8');
-  const users = JSON.parse(data);
-  // Remove passwords before sending to client
-  return users.map(({ password, ...userWithoutPassword }: any) => userWithoutPassword);
-}
+import { db } from '@/lib/db';
 
 export async function GET() {
   try {
-    const users = await getUsers();
+    // 1. Fetch all users from Turso heritage record
+    const result = await db.execute('SELECT * FROM users');
+    
+    // 2. Remove passwords before sending to curator/client
+    const users = result.rows.map((u: any) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone || '',
+      role: u.role
+    }));
+    
     return NextResponse.json(users);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Fetch Users Error:', error);
+    return NextResponse.json({ error: `Heritage Logic Error: ${error.message}` }, { status: 500 });
   }
 }

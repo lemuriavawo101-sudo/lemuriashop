@@ -1,43 +1,30 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-
-const USERS_FILE = path.join(process.cwd(), 'src/data/users.json');
-
-async function getUsers() {
-  const data = await fs.readFile(USERS_FILE, 'utf8');
-  return JSON.parse(data);
-}
-
-async function saveUsers(users: any[]) {
-  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
-}
+import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
     const { name, email, password, phone } = await request.json();
-    const users = await getUsers();
     
-    if (users.find((u: any) => u.email === email)) {
-      return NextResponse.json({ error: 'User already exists' }, { status: 400 });
+    // 1. Check if user already exists in Turso
+    const existing = await db.execute({
+      sql: 'SELECT id FROM users WHERE email = ?',
+      args: [email]
+    });
+
+    if (existing.rows.length > 0) {
+      return NextResponse.json({ error: 'User already exists in the heritage archive' }, { status: 400 });
     }
     
-    const newUser = {
-      id: `USR-${Date.now()}`,
-      name,
-      email,
-      password, // In a real app, hash this!
-      phone,
-      role: 'user'
-    };
+    // 2. Create new user record
+    const id = `USR-${Date.now()}`;
+    await db.execute({
+      sql: 'INSERT INTO users (id, name, email, password, phone, role) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [id, name, email, password, phone || '', 'user']
+    });
     
-    users.push(newUser);
-    await saveUsers(users);
-    
-    // Don't return the password
-    const { password: _, ...userWithoutPassword } = newUser;
-    return NextResponse.json(userWithoutPassword, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
+    return NextResponse.json({ id, name, email, phone, role: 'user' }, { status: 201 });
+  } catch (error: any) {
+    console.error('Registration Error:', error);
+    return NextResponse.json({ error: `Registration failed: ${error.message}` }, { status: 500 });
   }
 }
