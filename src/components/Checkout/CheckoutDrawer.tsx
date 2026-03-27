@@ -86,7 +86,7 @@ const CheckoutDrawer: React.FC = () => {
         return;
       }
 
-      // 2. Initialize Razorpay Checkout with Server Callback
+      // 2. Initialize Razorpay Checkout with Server Callback and Full Redirect
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: order.amount,
@@ -96,6 +96,7 @@ const CheckoutDrawer: React.FC = () => {
         image: '/favicon.svg', 
         order_id: order.id,
         callback_url: `${window.location.origin}/api/razorpay/callback`,
+        redirect: true, // FORCE FULL PAGE REDIRECT
         prefill: {
           name: user?.name,
           email: user?.email,
