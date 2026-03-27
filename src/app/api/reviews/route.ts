@@ -1,29 +1,22 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-
-const reviewsPath = path.join(process.cwd(), 'src/data/reviews.json');
-
-async function getReviews() {
-  const data = await fs.readFile(reviewsPath, 'utf8');
-  return JSON.parse(data);
-}
-
-async function saveReviews(reviews: any[]) {
-  await fs.writeFile(reviewsPath, JSON.stringify(reviews, null, 2));
-}
+import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const productId = searchParams.get('productId');
-  
   try {
-    const reviews = await getReviews();
+    const { searchParams } = new URL(request.url);
+    const productId = searchParams.get('productId');
+
+    let result;
     if (productId) {
-      const filtered = reviews.filter((r: any) => r.productId === parseInt(productId));
-      return NextResponse.json(filtered);
+      result = await db.execute({
+        sql: 'SELECT * FROM reviews WHERE productId = ? ORDER BY date DESC',
+        args: [Number(productId)]
+      });
+    } else {
+      result = await db.execute('SELECT * FROM reviews ORDER BY date DESC');
     }
-    return NextResponse.json(reviews);
+    
+    return NextResponse.json(result.rows);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 });
   }
@@ -31,29 +24,17 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { productId, userName, userEmail, rating, comment } = body;
+    const r = await request.json();
+    const id = `REV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const date = new Date().toISOString();
 
-    if (!productId || !userName || !rating) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
+    await db.execute({
+      sql: 'INSERT INTO reviews (id, productId, userName, userEmail, rating, comment, date) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      args: [id, r.productId, r.userName, r.userEmail, r.rating, r.comment, date]
+    });
 
-    const reviews = await getReviews();
-    const newReview = {
-      id: Date.now(),
-      productId,
-      userName,
-      userEmail,
-      rating,
-      comment,
-      date: new Date().toISOString()
-    };
-
-    reviews.push(newReview);
-    await saveReviews(reviews);
-
-    return NextResponse.json(newReview);
+    return NextResponse.json({ ...r, id, date });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to submit review' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to post review' }, { status: 500 });
   }
 }

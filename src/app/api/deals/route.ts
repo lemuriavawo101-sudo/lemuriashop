@@ -1,48 +1,31 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const dealsPath = path.resolve(process.cwd(), 'src/data/deals.json');
-
-function readDeals(): number[] {
-  try {
-    if (!fs.existsSync(dealsPath)) {
-      fs.writeFileSync(dealsPath, '[]', 'utf-8');
-      return [];
-    }
-    const raw = fs.readFileSync(dealsPath, 'utf-8');
-    return JSON.parse(raw) as number[];
-  } catch (error) {
-    console.error('[Deals API] Read Error:', error);
-    return [];
-  }
-}
+import { db } from '@/lib/db';
 
 export async function GET() {
-  const dealIds = readDeals();
-  return NextResponse.json(dealIds);
+  try {
+    const result = await db.execute('SELECT productId FROM deals');
+    const ids = result.rows.map((r: any) => r.productId);
+    return NextResponse.json(ids);
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch deals' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const ids: number[] = body.ids;
-
-    console.log('[Deals API] Attempting to save IDs:', ids);
-
-    if (!Array.isArray(ids)) {
-      return NextResponse.json({ error: 'ids must be an array' }, { status: 400 });
-    }
-    if (ids.length > 5) {
-      return NextResponse.json({ error: 'Maximum 5 deals allowed' }, { status: 400 });
-    }
-
-    fs.writeFileSync(dealsPath, JSON.stringify(ids, null, 2), 'utf-8');
-    console.log('[Deals API] Successfully saved to:', dealsPath);
+    const { dealIds } = await request.json();
     
-    return NextResponse.json({ success: true, ids });
+    // Replace all deals
+    await db.execute('DELETE FROM deals');
+    for (const id of dealIds) {
+      await db.execute({
+        sql: 'INSERT INTO deals (productId) VALUES (?)',
+        args: [id]
+      });
+    }
+    
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[Deals API] Save Error:', error);
-    return NextResponse.json({ error: 'Failed to save deals' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update deals' }, { status: 500 });
   }
 }

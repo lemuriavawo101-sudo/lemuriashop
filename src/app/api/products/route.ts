@@ -1,22 +1,19 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-
-const PRODUCTS_FILE = path.join(process.cwd(), 'src/data/products.json');
-
-async function getProducts() {
-  const data = await fs.readFile(PRODUCTS_FILE, 'utf8');
-  return JSON.parse(data);
-}
-
-async function saveProducts(products: any[]) {
-  await fs.writeFile(PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf8');
-}
+import { db } from '@/lib/db';
 
 export async function GET() {
   try {
-    const products = await getProducts();
-    return NextResponse.json(products);
+    const result = await db.execute('SELECT * FROM products');
+    const products = result.rows;
+    const variants = (await db.execute('SELECT * FROM variants')).rows;
+    
+    const enriched = products.map((p: any) => ({
+      ...p,
+      isWeapon: Boolean(p.isWeapon),
+      variants: variants.filter((v: any) => v.productId === p.id)
+    }));
+    
+    return NextResponse.json(enriched);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
   }
@@ -24,36 +21,52 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const newProduct = await request.json();
-    const products = await getProducts();
+    const p = await request.json();
     
-    // Simple ID generation
-    const nextId = products.length > 0 ? Math.max(...products.map((p: any) => p.id)) + 1 : 1;
-    const productWithId = { ...newProduct, id: nextId };
+    const result = await db.execute({
+      sql: `INSERT INTO products (name, category, artifactType, description, isWeapon, image, model3d, rotation, modelRotation, modelRotationX, modelRotationZ, stock)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      args: [p.name, p.category, p.artifactType, p.description, p.isWeapon ? 1 : 0, p.image, p.model3d, p.rotation || 0, p.modelRotation || 0, p.modelRotationX || 0, p.modelRotationZ || 0, p.stock || 'In Stock']
+    });
     
-    products.push(productWithId);
-    await saveProducts(products);
+    const productId = Number(result.rows[0].id);
     
-    return NextResponse.json(productWithId, { status: 201 });
+    if (p.variants && p.variants.length > 0) {
+      for (const v of p.variants) {
+        await db.execute({
+          sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel) VALUES (?, ?, ?, ?, ?, ?)',
+          args: [productId, v.size, v.price, v.old_price, v.stock, v.refillLevel]
+        });
+      }
+    }
+    
+    return NextResponse.json({ ...p, id: productId }, { status: 201 });
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const updatedProduct = await request.json();
-    const products = await getProducts();
+    const p = await request.json();
     
-    const index = products.findIndex((p: any) => p.id === updatedProduct.id);
-    if (index === -1) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    await db.execute({
+      sql: `UPDATE products SET name=?, category=?, artifactType=?, description=?, isWeapon=?, image=?, model3d=?, rotation=?, modelRotation=?, modelRotationX=?, modelRotationZ=?, stock=?
+            WHERE id = ?`,
+      args: [p.name, p.category, p.artifactType, p.description, p.isWeapon ? 1 : 0, p.image, p.model3d, p.rotation, p.modelRotation, p.modelRotationX, p.modelRotationZ, p.stock, p.id]
+    });
+    
+    // Update variants: simplify by delete and re-insert
+    await db.execute({ sql: 'DELETE FROM variants WHERE productId = ?', args: [p.id] });
+    for (const v of p.variants) {
+      await db.execute({
+        sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel) VALUES (?, ?, ?, ?, ?, ?)',
+        args: [p.id, v.size, v.price, v.old_price, v.stock, v.refillLevel]
+      });
     }
     
-    products[index] = updatedProduct;
-    await saveProducts(products);
-    
-    return NextResponse.json(updatedProduct);
+    return NextResponse.json(p);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
@@ -62,17 +75,8 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { id } = await request.json();
-    let products = await getProducts();
-    
-    const initialLength = products.length;
-    products = products.filter((p: any) => p.id !== id);
-    
-    if (products.length === initialLength) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
-    
-    await saveProducts(products);
-    return NextResponse.json({ message: 'Product deleted successfully' });
+    await db.execute({ sql: 'DELETE FROM products WHERE id = ?', args: [id] });
+    return NextResponse.json({ message: 'Product deleted' });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
