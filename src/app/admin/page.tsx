@@ -582,8 +582,10 @@ const DealOfDayView = ({ products, dealIds, setDealIds }: { products: Product[],
 export default function AdminPage() {
   const [activeView, setActiveView] = useState<'inventory' | 'orders' | 'users' | 'leads' | 'deals' | 'categories' | 'maintenance'>('inventory');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -626,15 +628,31 @@ export default function AdminPage() {
     fetch('/api/deals').then(r => r.json()).then(setDealIds);
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'LEMURIA2026') {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('admin_auth', 'true');
-      setAuthError(false);
-    } else {
+    setLoginLoading(true);
+    setAuthError(false);
+    
+    try {
+      const resp = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('admin_auth', 'true');
+        setAuthError(false);
+      } else {
+        setAuthError(true);
+        setTimeout(() => setAuthError(false), 3000);
+      }
+    } catch (err) {
       setAuthError(true);
-      setTimeout(() => setAuthError(false), 2000);
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -805,17 +823,26 @@ export default function AdminPage() {
           
           <form className={styles.authForm} onSubmit={handleLogin}>
             <input 
-              type="password" 
+              type="email" 
               className={styles.authInput} 
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              placeholder="CURATOR EMAIL"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               autoFocus
             />
-            <button type="submit" className={styles.authBtn}>
-              VERIFY IDENTITY
+            <input 
+              type="password" 
+              className={styles.authInput} 
+              placeholder="ACCESS KEY"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button type="submit" className={styles.authBtn} disabled={loginLoading}>
+              {loginLoading ? 'VALIDATING...' : 'VERIFY IDENTITY'}
             </button>
-            {authError && <div className={styles.authError}>INVALID ACCESS CODE</div>}
+            {authError && <div className={styles.authError}>IDENTIFICATION FAILURE</div>}
           </form>
         </div>
       </div>

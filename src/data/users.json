@@ -3,7 +3,7 @@
     "id": "USR-001",
     "name": "Admin User",
     "email": "admin@lemuria.com",
-    "password": "hashed_password_123",
+    "password": "admin",
     "phone": "0000000000",
     "role": "admin"
   },
