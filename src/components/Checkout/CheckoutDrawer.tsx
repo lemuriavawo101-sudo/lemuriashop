@@ -88,59 +88,25 @@ const CheckoutDrawer: React.FC = () => {
         description: 'Artifact Acquisition',
         image: '/favicon.svg', 
         order_id: order.id,
-        handler: async function (response: any) {
-          console.log('--- Razorpay Success Handshake ---');
-          try {
-            // 3. Verify Payment on Backend
-            const verifyResponse = await fetch('/api/razorpay/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
-              })
-            });
+        handler: function (response: any) {
+          console.log('--- Acquisition Secure: Initiating Sanctuary Entry ---');
+          
+          // Persist acquisition metadata for the success page to pick up
+          const acquisitionData = {
+            items: cartItems.map(i => ({ 
+              productId: i.id, 
+              variantSize: i.size, 
+              quantity: i.quantity, 
+              name: i.name 
+            })),
+            total: total,
+            customer: user?.name || 'Anonymous Practitioner',
+            delivery: delivery
+          };
+          sessionStorage.setItem('pending_acquisition', JSON.stringify(acquisitionData));
 
-            const verifyData = await verifyResponse.json();
-
-            if (verifyData.status === 'verified') {
-              console.log('Acquisition Verified in Cloud');
-              
-              // Save Final Order to database
-              const orderSaved = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  id: response.razorpay_payment_id,
-                  customer: user?.name || 'Anonymous Practitioner',
-                  items: cartItems.map(i => ({ 
-                    productId: i.id, 
-                    variantSize: i.size, 
-                    quantity: i.quantity, 
-                    name: i.name 
-                  })),
-                  total: total,
-                  status: 'Pending',
-                  date: new Date().toLocaleDateString(),
-                  delivery: delivery 
-                })
-              });
-
-              if (orderSaved.ok) {
-                alert('Success: Your artifacts have been secured and logged in the heritage archive.');
-                clearCart();
-                setIsCartOpen(false);
-              } else {
-                alert('Warning: Payment successful but heritage log failed. Please contact the curator with Payment ID: ' + response.razorpay_payment_id);
-              }
-            } else {
-              alert(`Verification mismatch: ${verifyData.error || 'The sanctuary could not verify the transaction signature.'}`);
-            }
-          } catch (handlerErr: any) {
-            console.error('Callback Failure:', handlerErr);
-            alert('A technical error occurred during verification. Transaction ID: ' + response.razorpay_payment_id);
-          }
+          // Non-blocking redirect to success page for final verification
+          window.location.href = `/checkout/success?razorpay_payment_id=${response.razorpay_payment_id}&razorpay_order_id=${response.razorpay_order_id}&razorpay_signature=${response.razorpay_signature}`;
         },
         modal: {
           onDismiss: function() {

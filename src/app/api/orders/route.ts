@@ -18,8 +18,18 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const o = await request.json();
-    const id = `ORD-${Date.now()}`;
-    const date = new Date().toISOString();
+    const id = o.id || `ORD-${Date.now()}`;
+    const date = o.date || new Date().toISOString();
+
+    // Idempotency check
+    const existing = await db.execute({
+      sql: 'SELECT id FROM orders WHERE id = ?',
+      args: [id]
+    });
+
+    if (existing.rows.length > 0) {
+      return NextResponse.json({ ...o, status: 'Existing' }, { status: 200 });
+    }
 
     await db.execute({
       sql: 'INSERT INTO orders (id, customer, total, status, date, items, delivery) VALUES (?, ?, ?, ?, ?, ?, ?)',
