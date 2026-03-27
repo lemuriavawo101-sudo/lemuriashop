@@ -32,7 +32,19 @@ const CheckoutDrawer: React.FC = () => {
     pincode: ''
   });
 
-  const isFormValid = delivery.address.length > 5 && delivery.contact.length >= 10 && delivery.pincode.length >= 6;
+  const validateContact = (val: string) => /^\d{10,}$/.test(val);
+  const validatePincode = (val: string) => /^\d{6,}$/.test(val);
+  const validateAddress = (val: string) => val.length >= 10;
+
+  const isFormValid = validateContact(delivery.contact) && 
+                      validatePincode(delivery.pincode) && 
+                      validateAddress(delivery.address);
+
+  const [touched, setTouched] = React.useState({
+    contact: false,
+    address: false,
+    pincode: false
+  });
 
   const handlePayment = async () => {
     if (total <= 0) {
@@ -41,7 +53,7 @@ const CheckoutDrawer: React.FC = () => {
     }
 
     if (!isFormValid) {
-      alert('Please complete the delivery sanctuary details to initiate acquisition.');
+      alert('Please complete the delivery sanctuary details with valid information to initiate acquisition.');
       return;
     }
 
@@ -193,30 +205,45 @@ const CheckoutDrawer: React.FC = () => {
         {cartItems.length > 0 && (
           <div className={styles.footer}>
             <div className={styles.deliveryForm}>
-              <h3>Delivery Sanctuary</h3>
+              <h3>DELIVERY SANCTUARY</h3>
+              
               <div className={styles.inputGroup}>
                 <input 
-                  type="text" 
-                  placeholder="Contact Number" 
+                  type="tel" 
+                  placeholder="Practitioner Contact (10 Digits)" 
                   value={delivery.contact}
-                  onChange={(e) => setDelivery({...delivery, contact: e.target.value})}
+                  onChange={(e) => setDelivery({...delivery, contact: e.target.value.replace(/\D/g, '')})}
+                  onBlur={() => setTouched({...touched, contact: true})}
                 />
+                {touched.contact && !validateContact(delivery.contact) && (
+                  <span className={styles.inputHint}>Minimum 10 numeric digits required</span>
+                )}
               </div>
+
               <div className={styles.inputGroup}>
                 <textarea 
-                  placeholder="Full Delivery Address" 
+                  placeholder="Complete Heritage Destination (Full Address)" 
                   rows={2}
                   value={delivery.address}
                   onChange={(e) => setDelivery({...delivery, address: e.target.value})}
+                  onBlur={() => setTouched({...touched, address: true})}
                 />
+                {touched.address && !validateAddress(delivery.address) && (
+                  <span className={styles.inputHint}>Minimum 10 characters required for dispatch</span>
+                )}
               </div>
+
               <div className={styles.inputGroup}>
                 <input 
                   type="text" 
-                  placeholder="Pincode" 
+                  placeholder="Pincode (6 Digits)" 
                   value={delivery.pincode}
-                  onChange={(e) => setDelivery({...delivery, pincode: e.target.value})}
+                  onChange={(e) => setDelivery({...delivery, pincode: e.target.value.replace(/\D/g, '')})}
+                  onBlur={() => setTouched({...touched, pincode: true})}
                 />
+                {touched.pincode && !validatePincode(delivery.pincode) && (
+                  <span className={styles.inputHint}>Valid 6-digit pincode required</span>
+                )}
               </div>
             </div>
 
@@ -238,7 +265,7 @@ const CheckoutDrawer: React.FC = () => {
               onClick={handlePayment}
               disabled={!isFormValid}
             >
-              Secure Acquisition
+              {isFormValid ? 'SECURE ACQUISITION' : 'COMPLETE FORM TO UNLOCK'}
             </button>
             <span className={styles.paymentNote}>SECURED BY RAZORPAY • 256-BIT ENCRYPTION</span>
           </div>
