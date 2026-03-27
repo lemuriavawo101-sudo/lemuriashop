@@ -8,6 +8,6 @@ if (!url || !authToken) {
 }
 
 export const db = createClient({
-  url: url || '',
+  url: url || 'libsql://dummy-for-build.turso.io', // Provide a dummy URL for build-time static checks
   authToken: authToken || '',
 });
