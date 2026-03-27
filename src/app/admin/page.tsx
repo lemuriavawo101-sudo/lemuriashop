@@ -625,8 +625,12 @@ export default function AdminPage() {
       setIsAuthenticated(true);
     }
 
-    fetch('/api/products').then(r => r.json()).then(setProducts);
-    fetch('/api/deals').then(r => r.json()).then(setDealIds);
+    fetch('/api/products').then(r => r.json()).then(data => {
+      if (Array.isArray(data)) setProducts(data);
+    });
+    fetch('/api/deals').then(r => r.json()).then(data => {
+      if (Array.isArray(data)) setDealIds(data);
+    });
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -663,16 +667,19 @@ export default function AdminPage() {
     try {
       if (activeView === 'inventory') {
         const resp = await fetch('/api/products');
-        if (!resp.ok) throw new Error('Failed to fetch products');
-        setProducts(await resp.json());
+        const data = await resp.json();
+        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch products');
+        setProducts(data);
       } else if (activeView === 'orders') {
         const resp = await fetch('/api/orders');
-        if (!resp.ok) throw new Error('Failed to fetch orders');
-        setOrders(await resp.json());
+        const data = await resp.json();
+        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch orders');
+        setOrders(data);
       } else if (activeView === 'users' || activeView === 'leads') {
         const resp = await fetch('/api/users');
-        if (!resp.ok) throw new Error('Failed to fetch users');
-        setUsers(await resp.json());
+        const data = await resp.json();
+        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch users');
+        setUsers(data);
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -706,8 +713,8 @@ export default function AdminPage() {
   };
 
   const counts = useMemo(() => {
-    const lowStock = products.filter(p => p.variants.some(v => v.stock <= (v.refillLevel || 0))).length;
-    const pendingOrders = orders.filter(o => o.status === 'Pending').length;
+    const lowStock = (Array.isArray(products) ? products : []).filter(p => p.variants?.some(v => v.stock <= (v.refillLevel || 0))).length;
+    const pendingOrders = (Array.isArray(orders) ? orders : []).filter(o => o.status === 'Pending').length;
     return { lowStock, pendingOrders };
   }, [products, orders]);
 

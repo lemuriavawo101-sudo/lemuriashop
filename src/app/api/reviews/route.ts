@@ -17,8 +17,8 @@ export async function GET(request: Request) {
     }
     
     return NextResponse.json(result.rows);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Heritage Logic Error: ${error.message || 'Failed to fetch reviews'}` }, { status: 500 });
   }
 }
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ...r, id, date });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to post review' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Failed to post review: ${error.message}` }, { status: 500 });
   }
 }

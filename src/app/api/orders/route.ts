@@ -10,8 +10,8 @@ export async function GET() {
       delivery: JSON.parse(o.delivery || '{}')
     }));
     return NextResponse.json(orders);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Heritage Logic Error: ${error.message || 'Failed to fetch orders'}` }, { status: 500 });
   }
 }
 
@@ -27,8 +27,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ...o, id, date, status: 'Pending' }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Failed to create order: ${error.message}` }, { status: 500 });
   }
 }
 
@@ -40,8 +40,8 @@ export async function PATCH(request: Request) {
       args: [status, id]
     });
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Failed to update order: ${error.message}` }, { status: 500 });
   }
 }
 
@@ -50,7 +50,7 @@ export async function DELETE(request: Request) {
     const { id } = await request.json();
     await db.execute({ sql: 'DELETE FROM orders WHERE id = ?', args: [id] });
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete order' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Failed to delete order: ${error.message}` }, { status: 500 });
   }
 }

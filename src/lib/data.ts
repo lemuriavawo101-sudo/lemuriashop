@@ -1,18 +1,21 @@
 import { db } from './db';
 import { cache } from 'react';
 
+// Helper to ensure objects are plain for Client Components
+const toPlain = (rows: any[]) => rows.map(r => ({ ...r }));
+
 export const getProducts = cache(async () => {
   try {
     const result = await db.execute('SELECT * FROM products');
-    const products = result.rows;
+    const products = toPlain(result.rows);
     
-    // Fetch all variants and join in memory (efficient for small collections)
+    // Fetch all variants and join in memory
     const variantResult = await db.execute('SELECT * FROM variants');
-    const allVariants = variantResult.rows;
+    const allVariants = toPlain(variantResult.rows);
 
     // Fetch all reviews for ratings
     const reviewResult = await db.execute('SELECT productId, rating FROM reviews');
-    const allReviews = reviewResult.rows;
+    const allReviews = toPlain(reviewResult.rows);
 
     return products.map((p: any) => {
       const pVariants = allVariants.filter((v: any) => v.productId === p.id);
@@ -69,7 +72,7 @@ export const getReviews = cache(async (productId?: number) => {
     } else {
       result = await db.execute('SELECT * FROM reviews ORDER BY date DESC');
     }
-    return result.rows;
+    return toPlain(result.rows);
   } catch (e) {
     console.error('getReviews DB error:', e);
     return [];
@@ -79,7 +82,7 @@ export const getReviews = cache(async (productId?: number) => {
 export const getOrders = cache(async () => {
   try {
     const result = await db.execute('SELECT * FROM orders ORDER BY date DESC');
-    return result.rows.map((o: any) => ({
+    return toPlain(result.rows).map((o: any) => ({
       ...o,
       items: JSON.parse(o.items || '[]'),
       delivery: JSON.parse(o.delivery || '{}')
@@ -93,7 +96,7 @@ export const getOrders = cache(async () => {
 export const getUsers = cache(async () => {
   try {
     const result = await db.execute('SELECT * FROM users');
-    return result.rows;
+    return toPlain(result.rows);
   } catch (e) {
     return [];
   }

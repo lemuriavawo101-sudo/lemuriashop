@@ -6,8 +6,8 @@ export async function GET() {
     const result = await db.execute('SELECT productId FROM deals');
     const ids = result.rows.map((r: any) => r.productId);
     return NextResponse.json(ids);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch deals' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Heritage Logic Error: ${error.message || 'Failed to fetch deals'}` }, { status: 500 });
   }
 }
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
     
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update deals' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Failed to update deals: ${error.message}` }, { status: 500 });
   }
 }

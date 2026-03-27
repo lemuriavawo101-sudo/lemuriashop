@@ -14,8 +14,8 @@ export async function GET() {
     }));
     
     return NextResponse.json(enriched);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: `Heritage Logic Error: ${error.message || 'Failed to fetch products'}` }, { status: 500 });
   }
 }
 
