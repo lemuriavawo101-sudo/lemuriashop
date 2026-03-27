@@ -58,28 +58,35 @@ const CheckoutDrawer: React.FC = () => {
     }
 
     try {
-      // 1. Create Order on Backend
+      // 1. Create Order on Backend with Sanctuary Notes for Recovery
       const response = await fetch('/api/razorpay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: total })
+        body: JSON.stringify({ 
+          amount: total,
+          notes: {
+            items: JSON.stringify(cartItems.map(i => ({ 
+              productId: i.id, 
+              variantSize: i.size, 
+              quantity: i.quantity, 
+              name: i.name 
+            }))),
+            total: total,
+            customer: user?.name || 'Anonymous Practitioner',
+            delivery: JSON.stringify(delivery)
+          }
+        })
       });
       const order = await response.json();
       console.log('--- Acquisition Order Data ---', order);
 
       if (!order.id) {
-        console.error('CRITICAL: Order ID is missing. The backend did not return a valid acquisition ID.');
-        alert('Artifact acquisition failed: No order ID returned from sanctuary. Check your server logs.');
+        console.error('CRITICAL: Order ID is missing.');
+        alert('Artifact acquisition failed: No order ID returned.');
         return;
       }
 
-      if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
-        console.error('CRITICAL: NEXT_PUBLIC_RAZORPAY_KEY_ID is missing from environment.');
-        alert('Museum configuration error: Key ID missing. Restart your server.');
-        return;
-      }
-
-      // 2. Initialize Razorpay Checkout
+      // 2. Initialize Razorpay Checkout with Server Callback
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: order.amount,
@@ -88,31 +95,7 @@ const CheckoutDrawer: React.FC = () => {
         description: 'Artifact Acquisition',
         image: '/favicon.svg', 
         order_id: order.id,
-        handler: function (response: any) {
-          console.log('--- Acquisition Secure: Initiating Sanctuary Entry ---');
-          
-          // Persist acquisition metadata for the success page to pick up
-          const acquisitionData = {
-            items: cartItems.map(i => ({ 
-              productId: i.id, 
-              variantSize: i.size, 
-              quantity: i.quantity, 
-              name: i.name 
-            })),
-            total: total,
-            customer: user?.name || 'Anonymous Practitioner',
-            delivery: delivery
-          };
-          sessionStorage.setItem('pending_acquisition', JSON.stringify(acquisitionData));
-
-          // Non-blocking redirect to success page for final verification
-          window.location.href = `/checkout/success?razorpay_payment_id=${response.razorpay_payment_id}&razorpay_order_id=${response.razorpay_order_id}&razorpay_signature=${response.razorpay_signature}`;
-        },
-        modal: {
-          onDismiss: function() {
-            console.log('Sanctuary Connection Closed by Practitioner');
-          }
-        },
+        callback_url: `${window.location.origin}/api/razorpay/callback`,
         prefill: {
           name: user?.name,
           email: user?.email,

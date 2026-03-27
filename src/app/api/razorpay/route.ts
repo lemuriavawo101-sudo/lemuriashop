@@ -8,19 +8,18 @@ const instance = new Razorpay({
 
 export async function POST(request: Request) {
   try {
-    const { amount } = await request.json();
+    const { amount, notes } = await request.json();
     
     const options = {
       amount: Math.round(amount * 100), // in paise
       currency: 'INR',
       receipt: `receipt_${Date.now()}`,
+      notes: notes || {}
     };
 
     const order = await instance.orders.create(options);
-    console.log('--- Razorpay Order CREATED ---');
+    console.log('--- Razorpay Order CREATED with Sanctuary Notes ---');
     console.log('ID:', order.id);
-    console.log('Amount:', order.amount);
-    console.log('------------------------------');
     return NextResponse.json(order);
   } catch (error) {
     console.error('Razorpay Order Error:', error);
