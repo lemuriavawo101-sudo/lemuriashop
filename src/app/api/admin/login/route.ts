@@ -5,6 +5,14 @@ export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
     
+    // BOOTSTRAP FALLBACK: Allow initial login to sync DB even if users table/cloud is unconfigured
+    if (email === 'admin@lemuria.com' && password === 'admin') {
+      return NextResponse.json({ 
+        success: true, 
+        user: { name: 'Head Curator (Bootstrap)', email: 'admin@lemuria.com' } 
+      });
+    }
+
     // Check against Turso Database
     const result = await db.execute({
       sql: 'SELECT * FROM users WHERE email = ? AND password = ? AND role = "admin"',
@@ -16,14 +24,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ 
         success: true, 
         user: { name: user.name, email: user.email } 
-      });
-    }
-
-    // BOOTSTRAP FALLBACK: Allow initial login to sync DB if users table is uninitialized
-    if (email === 'admin@lemuria.com' && password === 'admin') {
-      return NextResponse.json({ 
-        success: true, 
-        user: { name: 'Head Curator (Bootstrap)', email: 'admin@lemuria.com' } 
       });
     }
 
