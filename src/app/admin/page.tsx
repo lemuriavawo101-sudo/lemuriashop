@@ -1,9 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import styles from './admin.module.css';
 import dynamic from 'next/dynamic';
 
@@ -137,9 +134,10 @@ const ExportControls = ({ data, type, filename }: { data: any[], type: 'inventor
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (!data.length) return alert('No records to export');
     try {
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(formatData(data, type));
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Archive_Log");
@@ -149,9 +147,10 @@ const ExportControls = ({ data, type, filename }: { data: any[], type: 'inventor
     }
   };
 
-  const exportToCSV = () => {
+  const exportToCSV = async () => {
     if (!data.length) return alert('No records to export');
     try {
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(formatData(data, type));
       const csv = XLSX.utils.sheet_to_csv(ws);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -166,9 +165,11 @@ const ExportControls = ({ data, type, filename }: { data: any[], type: 'inventor
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     if (!data.length) return alert('No records to export');
     try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
       const doc = new jsPDF('l', 'pt', 'a4');
       const formatted = formatData(data, type);
       const headers = [Object.keys(formatted[0])];
