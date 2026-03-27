@@ -89,53 +89,62 @@ const CheckoutDrawer: React.FC = () => {
         image: '/favicon.svg', 
         order_id: order.id,
         handler: async function (response: any) {
-          console.log('--- Razorpay Handler Response ---');
-          console.log('Payment ID:', response.razorpay_payment_id);
-          console.log('Order ID:', response.razorpay_order_id);
-          console.log('Signature:', response.razorpay_signature);
-          console.log('---------------------------------');
-
-          // 3. Verify Payment on Backend
-          const verifyResponse = await fetch('/api/razorpay/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature
-            })
-          });
-
-          const verifyData = await verifyResponse.json();
-
-          if (verifyData.status === 'verified') {
-            alert('Acquisition Secure. Transaction ID: ' + response.razorpay_payment_id);
-            
-            // Save Final Order to database
-            await fetch('/api/orders', {
+          console.log('--- Razorpay Success Handshake ---');
+          try {
+            // 3. Verify Payment on Backend
+            const verifyResponse = await fetch('/api/razorpay/verify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                id: response.razorpay_payment_id,
-                customer: user?.name || 'Anonymous Practitioner',
-                items: cartItems.map(i => ({ 
-                  productId: i.id, 
-                  variantSize: i.size, 
-                  quantity: i.quantity, 
-                  name: i.name 
-                })),
-                total: total,
-                status: 'Pending',
-                date: new Date().toLocaleDateString(),
-                delivery: delivery // Save delivery details
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
               })
             });
 
-            clearCart();
-            setIsCartOpen(false);
-          } else {
-            const errorMsg = verifyData.error || 'Signature mismatch or server error';
-            alert(`Payment verification failed: ${errorMsg}\nStatus: ${verifyResponse.status}`);
+            const verifyData = await verifyResponse.json();
+
+            if (verifyData.status === 'verified') {
+              console.log('Acquisition Verified in Cloud');
+              
+              // Save Final Order to database
+              const orderSaved = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: response.razorpay_payment_id,
+                  customer: user?.name || 'Anonymous Practitioner',
+                  items: cartItems.map(i => ({ 
+                    productId: i.id, 
+                    variantSize: i.size, 
+                    quantity: i.quantity, 
+                    name: i.name 
+                  })),
+                  total: total,
+                  status: 'Pending',
+                  date: new Date().toLocaleDateString(),
+                  delivery: delivery 
+                })
+              });
+
+              if (orderSaved.ok) {
+                alert('Success: Your artifacts have been secured and logged in the heritage archive.');
+                clearCart();
+                setIsCartOpen(false);
+              } else {
+                alert('Warning: Payment successful but heritage log failed. Please contact the curator with Payment ID: ' + response.razorpay_payment_id);
+              }
+            } else {
+              alert(`Verification mismatch: ${verifyData.error || 'The sanctuary could not verify the transaction signature.'}`);
+            }
+          } catch (handlerErr: any) {
+            console.error('Callback Failure:', handlerErr);
+            alert('A technical error occurred during verification. Transaction ID: ' + response.razorpay_payment_id);
+          }
+        },
+        modal: {
+          onDismiss: function() {
+            console.log('Sanctuary Connection Closed by Practitioner');
           }
         },
         prefill: {
@@ -148,10 +157,15 @@ const CheckoutDrawer: React.FC = () => {
         }
       };
 
-      const rzp = new window.Razorpay(options);
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        console.error('Acquisition FAILED:', response.error);
+        alert(`Acquisition Blocked: ${response.error.description}`);
+      });
       rzp.open();
-    } catch (error) {
-      alert('Secure connection failed. Please try again.');
+    } catch (error: any) {
+      console.error('Secure Connection Initiation Error:', error);
+      alert('Secure connection failed: ' + (error.message || 'The checkout sanctuary is temporarily unreachable.'));
     }
   };
 
