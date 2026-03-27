@@ -7,7 +7,16 @@ if (!url || !authToken) {
   console.warn('Turso Database credentials missing from environment.');
 }
 
-export const db = createClient({
-  url: url || 'libsql://dummy-for-build.turso.io', // Provide a dummy URL for build-time static checks
-  authToken: authToken || '',
-});
+let _client: any = null;
+
+export const db = {
+  execute: async (stmt: any) => {
+    if (!_client) {
+      if (!url || !authToken) {
+        throw new Error('TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be configured in Vercel settings.');
+      }
+      _client = createClient({ url, authToken });
+    }
+    return await _client.execute(stmt);
+  }
+};
