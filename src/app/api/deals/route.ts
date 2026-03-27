@@ -13,7 +13,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { dealIds } = await request.json();
+    const { ids } = await request.json();
+    const dealIds = ids || [];
     
     // Replace all deals
     await db.execute('DELETE FROM deals');
