@@ -1,0 +1,286 @@
+.wishlistPage {
+  min-height: 100vh;
+  background: #050505;
+  padding-top: 140px;
+  padding-bottom: 100px;
+  position: relative;
+  overflow: hidden;
+  color: #eeeeee;
+}
+
+.ambientGlow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 600px;
+  background: radial-gradient(circle at 50% 0%, rgba(191, 149, 63, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.noiseOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+  position: relative;
+  z-index: 2;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 80px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 40px;
+}
+
+.titleWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.subtitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.4em;
+  color: #BF953F;
+  margin-bottom: 15px;
+}
+
+.title {
+  font-family: 'Cinzel', serif;
+  font-size: 4rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1;
+}
+
+.divider {
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, #BF953F, transparent);
+  margin: 25px 0;
+}
+
+.countSummary {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: #888888;
+}
+
+.backLink {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #888888;
+  letter-spacing: 0.2em;
+  text-decoration: none;
+  transition: all 0.3s;
+  padding: 12px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.backLink:hover {
+  color: #ffffff;
+  border-color: #BF953F;
+  background: rgba(191, 149, 63, 0.05);
+}
+
+.backLink .arrow {
+  margin-right: 10px;
+  transition: transform 0.3s;
+  display: inline-block;
+}
+
+.backLink:hover .arrow {
+  transform: translateX(-5px);
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 100px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vaultIcon {
+  font-size: 4rem;
+  margin-bottom: 30px;
+  opacity: 0.5;
+}
+
+.emptyTitle {
+  font-family: 'Cinzel', serif;
+  font-size: 2.5rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.emptyText {
+  font-family: 'Outfit', sans-serif;
+  max-width: 500px;
+  margin: 0 auto 40px;
+  color: #888888;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+}
+
+/* Grid Layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 40px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(191, 149, 63, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.imageContainer {
+  position: relative;
+  width: 100%;
+  padding-top: 75%;
+  background: #0a0a0a;
+  overflow: hidden;
+}
+
+.image {
+  object-fit: contain;
+  padding: 40px;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover .image {
+  transform: scale(1.08) rotate(2deg);
+}
+
+.removeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 5;
+  backdrop-filter: blur(5px);
+}
+
+.removeBtn:hover {
+  background: #ff0000;
+  border-color: #ff0000;
+  transform: rotate(90deg);
+}
+
+.info {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.category {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: #BF953F;
+  margin-bottom: 12px;
+}
+
+.name {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.price {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: #eeeeee;
+  margin-bottom: 30px;
+}
+
+.actions {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.actions :global(.btnPremium) {
+  flex: 1;
+}
+
+.detailsLink {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #888888;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s;
+}
+
+.detailsLink:hover {
+  color: #ffffff;
+  border-color: #BF953F;
+}
+
+@media (max-width: 1024px) {
+  .title { font-size: 3rem; }
+  .grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .header { flex-direction: column; align-items: flex-start; gap: 30px; }
+}

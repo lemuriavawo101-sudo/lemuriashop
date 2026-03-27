@@ -1,0 +1,174 @@
+.offersSection {
+  position: relative;
+  padding: 60px 0;
+  background-color: #ffffff;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.ambientGlow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw;
+  height: 40vh;
+  background: radial-gradient(circle, rgba(181, 151, 86, 0.03) 0%, transparent 70%);
+  filter: blur(100px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.filmGrain {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: multiply;
+  opacity: 0.3;
+}
+
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 4rem;
+  position: relative;
+  z-index: 10;
+}
+
+.grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.offerCard {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 20px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+}
+
+.offerCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--accent-soft);
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.offerCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.offerCard:hover::before {
+  opacity: 1;
+}
+
+.cardHeader {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 25px;
+}
+
+.badge {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  color: #888888;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.revealWrapper {
+  overflow: hidden;
+}
+
+.title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 950;
+  color: #111111;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+}
+
+.description {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  color: #666666;
+  line-height: 1.6;
+  font-weight: 400;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 10;
+}
+
+.actionBtn {
+  background: transparent;
+  border: none;
+  color: #111111;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+  margin-top: auto;
+  position: relative;
+  z-index: 10;
+}
+
+.arrow {
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.actionBtn:hover .arrow {
+  transform: translateX(8px);
+}
+
+.technicalCoords {
+  position: absolute;
+  top: 40px;
+  right: -50px;
+  transform: rotate(90deg);
+  font-family: monospace;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #dddddd;
+  letter-spacing: 0.3em;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+  .grid { flex-direction: column; }
+  .offerCard { min-height: 250px; }
+  .technicalCoords { display: none; }
+  .container { padding: 0 2rem; }
+}

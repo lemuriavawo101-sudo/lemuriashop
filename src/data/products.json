@@ -1,0 +1,284 @@
+[
+  {
+    "id": 1,
+    "name": "Karla Kattai",
+    "category": "Weapons",
+    "artifactType": "Training Tool",
+    "description": "Traditional wooden training tools used for developing upper body strength and coordination.",
+    "isWeapon": true,
+    "variants": [
+      {
+        "size": "2KG",
+        "price": 1200,
+        "old_price": 1400,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "3KG",
+        "price": 1400,
+        "old_price": 1650,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "4KG",
+        "price": 1600,
+        "old_price": 1900,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "5KG",
+        "price": 1800,
+        "old_price": 2150,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "6KG",
+        "price": 2000,
+        "old_price": 2400,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "10KG",
+        "price": 2800,
+        "old_price": 3400,
+        "stock": 10,
+        "refillLevel": 3
+      }
+    ],
+    "image": "/uploads/1774411397409-Gathai.jpg-removebg-preview.png",
+    "model3d": "/uploads/1774411308833-d78fab7a-4ee7-4c5d-a7d9-0b57e086b6a5.glb",
+    "rotation": 24,
+    "modelRotation": -179.8,
+    "stock": "In Stock",
+    "modelRotationX": -11.5,
+    "modelRotationZ": 0
+  },
+  {
+    "id": 2,
+    "name": "Adimurai Uniform",
+    "category": "Attire",
+    "artifactType": "Martial Attire",
+    "description": "Durable and breathable uniforms for practicing Adimurai martial arts.",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "24",
+        "price": 950,
+        "old_price": 1100,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "32",
+        "price": 1350,
+        "old_price": 1600,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "44",
+        "price": 1950,
+        "old_price": 2500,
+        "stock": 10,
+        "refillLevel": 3
+      }
+    ],
+    "image": "https://m.media-amazon.com/images/I/61K-K8T0YGL._AC_SX679_.jpg",
+    "model3d": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
+    "stock": "In Stock"
+  },
+  {
+    "id": 4,
+    "name": "Varma Thailam",
+    "category": "Herbal oils",
+    "artifactType": "Medicinal Oil",
+    "description": "Traditional medicinal oil for Varma maruthuvam treatments and recovery.",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "100ml",
+        "price": 450,
+        "old_price": 550,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "500ml",
+        "price": 1800,
+        "old_price": 2200,
+        "stock": 10,
+        "refillLevel": 3
+      },
+      {
+        "size": "1 Liter",
+        "price": 3200,
+        "old_price": 3800,
+        "stock": 10,
+        "refillLevel": 3
+      }
+    ],
+    "image": "https://m.media-amazon.com/images/I/61o28+E-oCL._AC_UF1000,1000_QL80_.jpg",
+    "stock": "In Stock"
+  },
+  {
+    "name": "New layer test",
+    "category": "Weapons",
+    "artifactType": "Test Blade",
+    "description": "",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "Standard",
+        "price": 1,
+        "old_price": 3,
+        "stock": 9,
+        "refillLevel": 3
+      }
+    ],
+    "image": "/uploads/1774513835248-IMG_2323.png",
+    "model3d": "/uploads/1774513848771-sword_kai_kathi.glb",
+    "rotation": -35,
+    "modelRotation": 62,
+    "stock": "In Stock",
+    "id": 8,
+    "modelRotationX": -144,
+    "modelRotationZ": -78
+  },
+  {
+    "name": "Black knife",
+    "category": "Weapons",
+    "description": "Decorative black knife",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "Standard",
+        "price": 1600,
+        "old_price": 2200,
+        "stock": 10,
+        "refillLevel": 3
+      }
+    ],
+    "image": "/uploads/1774547784652-Black_Kinife.jpg-removebg-preview_(1).png",
+    "model3d": "/uploads/1774548136111-blackknife.glb",
+    "rotation": -33,
+    "modelRotation": 31,
+    "artifactType": "Standard",
+    "stock": "In Stock",
+    "id": 9
+  },
+  {
+    "id": 12,
+    "name": "Ceremonial Kedayam",
+    "category": "Decoration",
+    "artifactType": "Shield",
+    "description": "Hand-crafted decorative shield with traditional motifs",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "18 Inch",
+        "price": 8500,
+        "old_price": 10500,
+        "stock": 0,
+        "refillLevel": 2
+      }
+    ],
+    "image": "https://m.media-amazon.com/images/I/61o28+E-oCL._AC_UF1000,1000_QL80_.jpg",
+    "stock": "Out of Stock"
+  },
+  {
+    "id": 14,
+    "name": "Silambam Training Pants",
+    "category": "Attire",
+    "artifactType": "Pants",
+    "description": "Flexible cotton pants designed for Silambam and Adimurai movements",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "M",
+        "price": 1200,
+        "old_price": 1500,
+        "stock": 20,
+        "refillLevel": 5
+      },
+      {
+        "size": "L",
+        "price": 1300,
+        "old_price": 1600,
+        "stock": 15,
+        "refillLevel": 5
+      }
+    ],
+    "image": "https://m.media-amazon.com/images/I/61K-K8T0YGL._AC_SX679_.jpg",
+    "stock": "In Stock"
+  },
+  {
+    "id": 15,
+    "name": "Varma Anatomy Poster",
+    "category": "Books",
+    "artifactType": "Poster",
+    "description": "Detailed chart showing major Varma points of the human body",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "A2",
+        "price": 650,
+        "old_price": 800,
+        "stock": 50,
+        "refillLevel": 10
+      }
+    ],
+    "image": "https://m.media-amazon.com/images/I/71YvRto2-0L._AC_SX679_.jpg",
+    "stock": "In Stock"
+  },
+  {
+    "name": "Maankombu",
+    "category": "Weapons",
+    "description": "Practice maankombu",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "Standard",
+        "price": 1,
+        "old_price": 5,
+        "stock": 10,
+        "refillLevel": 3
+      }
+    ],
+    "image": "/uploads/1774592303760-IMG_3141.png",
+    "model3d": "/uploads/1774592312409-maankombu1.glb",
+    "rotation": -12,
+    "modelRotation": 75,
+    "artifactType": "Standard",
+    "stock": "In Stock",
+    "id": 17
+  },
+  {
+    "name": "Full case sword",
+    "category": "Weapons",
+    "description": "",
+    "isWeapon": false,
+    "variants": [
+      {
+        "size": "Standard",
+        "price": 0,
+        "old_price": 0,
+        "stock": 10,
+        "refillLevel": 3
+      }
+    ],
+    "image": "/uploads/1774593774555-IMG_9688-removebg-preview.png",
+    "model3d": "/uploads/1774593789702-sword_glb.glb",
+    "rotation": 25,
+    "modelRotation": 0,
+    "artifactType": "Standard",
+    "stock": "In Stock",
+    "id": 18,
+    "modelRotationX": 0,
+    "modelRotationZ": 0
+  }
+]

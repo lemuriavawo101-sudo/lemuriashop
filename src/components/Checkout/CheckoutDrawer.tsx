@@ -1,0 +1,251 @@
+"use client";
+
+import React from 'react';
+import Image from 'next/image';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter, usePathname } from 'next/navigation';
+import styles from './CheckoutDrawer.module.css';
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const CheckoutDrawer: React.FC = () => {
+  const { cartItems, cartCount, isCartOpen, setIsCartOpen, removeFromCart, clearCart } = useCart();
+  const { user } = useAuth();
+  const pathname = usePathname();
+
+  const isAdmin = pathname?.startsWith('/admin');
+
+  if (isAdmin) return null;
+
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const tax = subtotal * 0.18; // GST 18%
+  const total = subtotal + tax;
+
+  const [delivery, setDelivery] = React.useState({
+    address: '',
+    contact: '',
+    pincode: ''
+  });
+
+  const isFormValid = delivery.address.length > 5 && delivery.contact.length >= 10 && delivery.pincode.length >= 6;
+
+  const handlePayment = async () => {
+    if (total <= 0) {
+      alert('The sanctuary requires a minimum offering of ₹1 for acquisition. Please select a priced artifact.');
+      return;
+    }
+
+    if (!isFormValid) {
+      alert('Please complete the delivery sanctuary details to initiate acquisition.');
+      return;
+    }
+
+    try {
+      // 1. Create Order on Backend
+      const response = await fetch('/api/razorpay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: total })
+      });
+      const order = await response.json();
+      console.log('--- Acquisition Order Data ---', order);
+
+      if (!order.id) {
+        console.error('CRITICAL: Order ID is missing. The backend did not return a valid acquisition ID.');
+        alert('Artifact acquisition failed: No order ID returned from sanctuary. Check your server logs.');
+        return;
+      }
+
+      if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+        console.error('CRITICAL: NEXT_PUBLIC_RAZORPAY_KEY_ID is missing from environment.');
+        alert('Museum configuration error: Key ID missing. Restart your server.');
+        return;
+      }
+
+      // 2. Initialize Razorpay Checkout
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
+        amount: order.amount,
+        currency: order.currency,
+        name: 'LEMURIA Heritage',
+        description: 'Artifact Acquisition',
+        image: '/favicon.svg', 
+        order_id: order.id,
+        handler: async function (response: any) {
+          console.log('--- Razorpay Handler Response ---');
+          console.log('Payment ID:', response.razorpay_payment_id);
+          console.log('Order ID:', response.razorpay_order_id);
+          console.log('Signature:', response.razorpay_signature);
+          console.log('---------------------------------');
+
+          // 3. Verify Payment on Backend
+          const verifyResponse = await fetch('/api/razorpay/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+
+          const verifyData = await verifyResponse.json();
+
+          if (verifyData.status === 'verified') {
+            alert('Acquisition Secure. Transaction ID: ' + response.razorpay_payment_id);
+            
+            // Save Final Order to database
+            await fetch('/api/orders', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: response.razorpay_payment_id,
+                customer: user?.name || 'Anonymous Practitioner',
+                items: cartItems.map(i => ({ 
+                  productId: i.id, 
+                  variantSize: i.size, 
+                  quantity: i.quantity, 
+                  name: i.name 
+                })),
+                total: total,
+                status: 'Pending',
+                date: new Date().toLocaleDateString(),
+                delivery: delivery // Save delivery details
+              })
+            });
+
+            clearCart();
+            setIsCartOpen(false);
+          } else {
+            const errorMsg = verifyData.error || 'Signature mismatch or server error';
+            alert(`Payment verification failed: ${errorMsg}\nStatus: ${verifyResponse.status}`);
+          }
+        },
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+          contact: delivery.contact
+        },
+        theme: {
+          color: '#BF953F'
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      alert('Secure connection failed. Please try again.');
+    }
+  };
+
+  return (
+    <>
+      <div 
+        className={`${styles.drawerOverlay} ${isCartOpen ? styles.drawerOpen : ''}`} 
+        onClick={() => setIsCartOpen(false)}
+      />
+      
+      <div className={`${styles.drawer} ${isCartOpen ? styles.drawerContentOpen : ''}`}>
+        <div className={styles.header}>
+          <h2>YOUR COLLECTION</h2>
+          <button className={styles.closeBtn} onClick={() => setIsCartOpen(false)}>✕</button>
+        </div>
+
+        <div className={styles.itemList}>
+          {cartItems.length === 0 ? (
+            <div className={styles.emptyState}>
+              <p>Your sanctuary is empty.</p>
+              <button 
+                className={styles.checkoutBtn} 
+                onClick={() => setIsCartOpen(false)}
+              >
+                Explore Gallery
+              </button>
+            </div>
+          ) : (
+            cartItems.map((item, idx) => (
+              <div key={`${item.id}-${idx}`} className={styles.cartItem}>
+                <div className={styles.itemImage}>
+                  <Image src={item.image} alt={item.name} fill style={{ objectFit: 'contain' }} />
+                </div>
+                <div className={styles.itemDetails}>
+                  <h4>{item.name}</h4>
+                  <p className={styles.itemMeta}>{item.size} • QTY: {item.quantity}</p>
+                  <span className={styles.itemPrice}>₹{item.price.toLocaleString()}</span>
+                  <br />
+                  <button 
+                    className={styles.removeBtn} 
+                    onClick={() => removeFromCart(item.id, item.size)}
+                  >
+                    Remove Artifact
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {cartItems.length > 0 && (
+          <div className={styles.footer}>
+            <div className={styles.deliveryForm}>
+              <h3>Delivery Sanctuary</h3>
+              <div className={styles.inputGroup}>
+                <input 
+                  type="text" 
+                  placeholder="Contact Number" 
+                  value={delivery.contact}
+                  onChange={(e) => setDelivery({...delivery, contact: e.target.value})}
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <textarea 
+                  placeholder="Full Delivery Address" 
+                  rows={2}
+                  value={delivery.address}
+                  onChange={(e) => setDelivery({...delivery, address: e.target.value})}
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <input 
+                  type="text" 
+                  placeholder="Pincode" 
+                  value={delivery.pincode}
+                  onChange={(e) => setDelivery({...delivery, pincode: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>Subtotal</span>
+              <span className={styles.summaryValue}>₹{subtotal.toLocaleString()}</span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>Hereditary Tax (GST 18%)</span>
+              <span className={styles.summaryValue}>₹{tax.toLocaleString()}</span>
+            </div>
+            <div className={`${styles.summaryRow} ${styles.totalRow}`}>
+              <span className={styles.totalLabel}>TOTAL ACQUISITION</span>
+              <span className={styles.totalValue}>₹{total.toLocaleString()}</span>
+            </div>
+
+            <button 
+              className={styles.checkoutBtn} 
+              onClick={handlePayment}
+              disabled={!isFormValid}
+            >
+              Secure Acquisition
+            </button>
+            <span className={styles.paymentNote}>SECURED BY RAZORPAY • 256-BIT ENCRYPTION</span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default CheckoutDrawer;

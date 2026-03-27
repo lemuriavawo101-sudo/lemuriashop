@@ -1,0 +1,66 @@
+[
+  {
+    "id": "USR-001",
+    "name": "Admin User",
+    "email": "admin@lemuria.com",
+    "password": "hashed_password_123",
+    "phone": "0000000000",
+    "role": "admin"
+  },
+  {
+    "id": "USR-1774333370918",
+    "name": "Reshanth",
+    "email": "sivareshanth9871buissness@gmail.com",
+    "password": "Htnahser@9871",
+    "phone": "",
+    "role": "user"
+  },
+  {
+    "id": "USR-1774333474453",
+    "name": "test",
+    "email": "sivareshanth987@gmail.com",
+    "password": "Htnahser@9871",
+    "phone": "",
+    "role": "user"
+  },
+  {
+    "id": "USR-1774503718645",
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123",
+    "phone": "",
+    "role": "user"
+  },
+  {
+    "id": "USR-1774531529608",
+    "name": "Reshanth R",
+    "email": "sivareshanth9871@gmail.com",
+    "password": "Htnahser@9871",
+    "phone": "8056294950",
+    "role": "user"
+  },
+  {
+    "id": "USR-1774612345678",
+    "name": "Arjun Kumar",
+    "email": "arjun.k@example.com",
+    "password": "password123",
+    "phone": "9443211223",
+    "role": "user"
+  },
+  {
+    "id": "USR-1774623456789",
+    "name": "Meera S",
+    "email": "meera.s@example.com",
+    "password": "password123",
+    "phone": "7708899441",
+    "role": "user"
+  },
+  {
+    "id": "USR-1774634567890",
+    "name": "Karthick Raja",
+    "email": "karthick@example.com",
+    "password": "password123",
+    "phone": "9887766554",
+    "role": "user"
+  }
+]

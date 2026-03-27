@@ -1,0 +1,83 @@
+[
+  {
+    "id": 1,
+    "name": "Karla Kattai",
+    "category": "Weapons",
+    "artifactType": "Training Tool",
+    "description": "Traditional wooden training tools used for developing upper body strength and coordination.",
+    "isWeapon": true,
+    "variants": [
+      { "size": "2KG", "price": 1200, "old_price": 1400, "stock": 10, "refillLevel": 3 },
+      { "size": "4KG", "price": 1600, "old_price": 1900, "stock": 10, "refillLevel": 3 },
+      { "size": "10KG", "price": 2800, "old_price": 3400, "stock": 10, "refillLevel": 3 }
+    ],
+    "image": "/uploads/1774411397409-Gathai.jpg-removebg-preview.png",
+    "model3d": "/uploads/1774411308833-d78fab7a-4ee7-4c5d-a7d9-0b57e086b6a5.glb",
+    "rotation": 24,
+    "modelRotation": -179.8,
+    "modelRotationX": -11.5,
+    "modelRotationZ": 0,
+    "stock": "In Stock"
+  },
+  {
+    "id": 2,
+    "name": "Adimurai Uniform",
+    "category": "Attire",
+    "artifactType": "Martial Attire",
+    "description": "Durable and breathable uniforms for practicing Adimurai martial arts.",
+    "isWeapon": false,
+    "variants": [
+      { "size": "M", "price": 1350, "old_price": 1600, "stock": 10, "refillLevel": 3 },
+      { "size": "L", "price": 1950, "old_price": 2500, "stock": 10, "refillLevel": 3 }
+    ],
+    "image": "https://m.media-amazon.com/images/I/61K-K8T0YGL._AC_SX679_.jpg",
+    "model3d": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
+    "stock": "In Stock"
+  },
+  {
+    "id": 4,
+    "name": "Varma Thailam",
+    "category": "Herbal oils",
+    "artifactType": "Medicinal Oil",
+    "description": "Traditional medicinal oil for Varma maruthuvam treatments and recovery.",
+    "isWeapon": false,
+    "variants": [
+      { "size": "100ml", "price": 450, "old_price": 550, "stock": 10, "refillLevel": 3 },
+      { "size": "500ml", "price": 1800, "old_price": 2200, "stock": 10, "refillLevel": 3 }
+    ],
+    "image": "https://m.media-amazon.com/images/I/61o28+E-oCL._AC_UF1000,1000_QL80_.jpg",
+    "stock": "In Stock"
+  },
+  {
+    "id": 9,
+    "name": "Black Knife",
+    "category": "Weapons",
+    "artifactType": "Standard",
+    "description": "Decorative black knife with obsidian-like finish.",
+    "isWeapon": false,
+    "variants": [
+      { "size": "Standard", "price": 1600, "old_price": 2200, "stock": 10, "refillLevel": 3 }
+    ],
+    "image": "/uploads/1774547784652-Black_Kinife.jpg-removebg-preview_(1).png",
+    "model3d": "/uploads/1774548136111-blackknife.glb",
+    "rotation": -33,
+    "modelRotation": 31,
+    "stock": "In Stock"
+  },
+  {
+    "id": 17,
+    "name": "Maankombu",
+    "category": "Weapons",
+    "artifactType": "Standard",
+    "description": "Traditional Maankombu practice weapon.",
+    "isWeapon": false,
+    "variants": [
+      { "size": "Standard", "price": 1, "old_price": 5, "stock": 10, "refillLevel": 3 }
+    ],
+    "image": "/uploads/1774592303760-IMG_3141.png",
+    "model3d": "/uploads/1774592312409-maankombu1.glb",
+    "rotation": -12,
+    "modelRotation": 75,
+    "stock": "In Stock"
+  }
+]

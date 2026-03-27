@@ -1,0 +1,457 @@
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--background);
+  background-image: var(--hero-overlay), url('https://images.unsplash.com/photo-1544457070-4cd773b4d71e?q=80&w=1800&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  display: flex;
+  align-items: center;
+  padding-top: 90px;
+  overflow: hidden;
+}
+
+/* 1. Atmospheric Glows (Cinematic Lighting) */
+.ambientGlowPrimary {
+  position: absolute;
+  top: 10%;
+  right: -5%;
+  width: 70vw;
+  height: 70vw;
+  background: radial-gradient(circle, rgba(229, 9, 20, 0.04) 0%, transparent 60%);
+  filter: blur(120px);
+  z-index: 1;
+  pointer-events: none;
+  animation: pulseGlow 15s infinite alternate ease-in-out;
+}
+
+.ambientGlowSecondary {
+  position: absolute;
+  bottom: -20%;
+  left: 5%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(179, 143, 0, 0.02) 0%, transparent 60%);
+  filter: blur(100px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.lensFlare {
+  position: absolute;
+  top: 20%;
+  right: 15%;
+  width: 1px;
+  height: 1px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 
+    0 0 100px 50px rgba(229, 9, 20, 0.06),
+    0 0 200px 100px rgba(179, 143, 0, 0.02),
+    0 0 400px 200px rgba(255, 255, 255, 0.1);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.3;
+  animation: flicker 8s infinite alternate ease-in-out;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(1) translate(0, 0); opacity: 0.6; }
+  100% { transform: scale(1.15) translate(-3%, 3%); opacity: 1; }
+}
+
+/* 2. Giant Watermark Overlay */
+.watermark {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 35vw;
+  font-weight: 950;
+  color: var(--glass-border);
+  white-space: nowrap;
+  letter-spacing: -0.08em;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  text-transform: uppercase;
+}
+
+/* 3. Film Grain */
+.filmGrain {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 2;
+  animation: grain 10s steps(8) infinite;
+  mix-blend-mode: multiply;
+}
+
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -5%); }
+  20% { transform: translate(-10%, 5%); }
+  30% { transform: translate(5%, -10%); }
+  40% { transform: translate(-5%, 15%); }
+  50% { transform: translate(-10%, 5%); }
+  60% { transform: translate(15%, 0); }
+  70% { transform: translate(0, 10%); }
+  80% { transform: translate(-15%, 0); }
+  90% { transform: translate(10%, 5%); }
+  100% { transform: translate(5%, 0); }
+}
+
+.container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 4rem;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  height: calc(100vh - 80px);
+  z-index: 10;
+  position: relative;
+}
+
+/* --- CINEMATIC ANIMATIONS --- */
+.animateFadeIn { animation: fadeIn 2s cubic-bezier(0.19, 1, 0.22, 1) forwards; opacity: 0; }
+.animateFadeInDelayed { animation: fadeIn 2s cubic-bezier(0.19, 1, 0.22, 1) 0.8s forwards; opacity: 0; }
+.animateFadeInDelayedMore { animation: fadeIn 2s cubic-bezier(0.19, 1, 0.22, 1) 1.2s forwards; opacity: 0; }
+.animateFadeInLate { animation: fadeIn 2.5s cubic-bezier(0.19, 1, 0.22, 1) 1.6s forwards; opacity: 0; }
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* --- LEFT CONTENT AREA --- */
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 800px;
+  position: relative;
+  z-index: 20;
+}
+
+/* Eyebrow */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.nIcon {
+  color: #BF953F;
+  font-weight: 950;
+  font-size: 2rem;
+  letter-spacing: -0.05em;
+  text-shadow: 0 0 20px rgba(191, 149, 63, 0.4);
+}
+
+.seriesText {
+  color: #666;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.5em; 
+  text-transform: uppercase;
+}
+
+/* Main Title */
+.title {
+  font-family: var(--font-serif);
+  font-size: 8.5rem;
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: 0.05em;
+  color: var(--foreground);
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  text-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.revealWrapper {
+  overflow: hidden;
+  display: block;
+}
+
+.revealText {
+  display: block;
+  transform: translateY(110%);
+  animation: revealUp 1.5s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+}
+
+@keyframes revealUp {
+  0% { transform: translateY(110%); }
+  100% { transform: translateY(0%); }
+}
+
+.revealText.delay1 { animation-delay: 0.2s; }
+.revealText.delay2 { animation-delay: 0.6s; }
+.revealText.delay3 { animation-delay: 0.8s; }
+
+/* Description */
+.description {
+  font-size: 1.4rem;
+  line-height: 1.6;
+  color: var(--muted);
+  font-weight: 400;
+  margin-bottom: 5rem;
+  max-width: 650px;
+  letter-spacing: 0.02em;
+}
+
+/* Action Buttons */
+.actionGroup {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.actionBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 1.2rem 3.5rem;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  overflow: hidden;
+}
+
+.actionBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.actionBtn:hover::before {
+  left: 100%;
+}
+
+.btnIcon { font-size: 1.2rem; }
+
+.primaryBtn {
+  background-color: #BF953F;
+  color: #000000;
+  box-shadow: 0 10px 30px rgba(191, 149, 63, 0.2); 
+  border: 1px solid #BF953F;
+}
+
+.primaryBtn:hover {
+  background-color: #000000;
+  color: #BF953F;
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.secondaryBtn {
+  background-color: var(--glass);
+  color: var(--foreground);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(5px);
+}
+
+.secondaryBtn:hover {
+  background-color: rgba(255,255,255,0.05);
+  border-color: #BF953F;
+  color: #BF953F;
+  transform: translateY(-3px) scale(1.02);
+}
+
+/* Cinematic Letterbox Bars */
+.letterboxTop,
+.letterboxBottom {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #000000;
+  z-index: 100;
+  animation: letterboxReveal 1.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+.letterboxTop { top: 0; transform: translateY(-100%); }
+.letterboxBottom { bottom: 0; transform: translateY(100%); }
+
+@keyframes letterboxReveal {
+  to { transform: translateY(0); }
+}
+
+/* Scanlines Overlay */
+.scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.05) 50%
+  ),
+  linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.02),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.02)
+  );
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0.4;
+}
+
+/* Technical Focus Frame */
+.focusFrame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 450px;
+  height: 450px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.3;
+  animation: focusPulse 4s infinite alternate ease-in-out;
+}
+
+@keyframes focusPulse {
+  from { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
+  to { transform: translate(-50%, -50%) scale(1.05); opacity: 0.4; }
+}
+
+.focusBracketTL,
+.focusBracketTR,
+.focusBracketBL,
+.focusBracketBR {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.focusBracketTL { top: 0; left: 0; border-right: none; border-bottom: none; }
+.focusBracketTR { top: 0; right: 0; border-left: none; border-bottom: none; }
+.focusBracketBL { bottom: 0; left: 0; border-right: none; border-top: none; }
+.focusBracketBR { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+.focusCoords {
+  position: absolute;
+  bottom: -30px;
+  left: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--accent-gold);
+  font-family: monospace;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* Scroll Indicator */
+.scrollIndicator {
+  position: absolute;
+  bottom: 80px;
+  right: 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  z-index: 110;
+}
+
+.scrollLine {
+  width: 1px;
+  height: 80px;
+  background: linear-gradient(to bottom, #FFFFFF 50%, transparent 50%);
+  background-size: 100% 200%;
+  animation: scrollDown 2s cubic-bezier(0.8, 0, 0.2, 1) infinite;
+}
+
+@keyframes scrollDown {
+  0% { background-position: 100% 100%; }
+  100% { background-position: 100% -100%; }
+}
+
+/* Removed UI Clutter */
+.experienceBar,
+.bottomTabs,
+.tab,
+.scrollText {
+  display: none;
+}
+
+/* Ambient Glow Transitions */
+.ambientGlowPrimary,
+.ambientGlowSecondary {
+  transition: transform 0.2s ease-out;
+}
+
+/* --- RIGHT MEDIA AREA (3D Model fills this freely) --- */
+.mediaArea {
+  flex: 1.2;
+  position: relative;   /* Canvas uses absolute positioning relative to this */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;         /* Prevent flex overflow */
+}
+
+.weaponBackdrop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(0,0,0,0.02) 0%, transparent 60%);
+  border-radius: 50%;
+  z-index: 10;
+}
+
+/* weaponContainer removed — model sits freely in .mediaArea */
+
+.modelNote {
+  position: absolute;
+  bottom: 40px;
+  right: 0;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #D1D5DB;
+  letter-spacing: 0.1em;
+  z-index: 30;
+}
+
+@media (max-width: 1024px) {
+  .container { flex-direction: column; padding-top: 2rem; padding-left: 2rem; padding-right: 2rem; }
+  .title { font-size: 4.5rem; margin-top: 2rem; }
+  .mediaArea { width: 100%; margin-top: 2rem; min-height: 400px; }
+  .watermark { display: none; }
+}

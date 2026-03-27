@@ -1,0 +1,297 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 0;
+  z-index: 1000;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scrolled {
+  height: 80px;
+  background: var(--background);
+  border-bottom: 1px solid var(--accent-gold);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+  width: 100%;
+  max-width: 1800px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5rem;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  height: 100%;
+  padding: 5px 0;
+}
+
+.mainLogo {
+  height: auto;
+  width: 180px;
+  object-fit: contain;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.05));
+}
+
+.scrolled .mainLogo {
+  width: 150px;
+}
+
+.navLinks {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.navLinks a {
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--foreground);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  opacity: 0.6;
+  padding: 8px 0;
+}
+
+.navLinks a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #BF953F;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navLinks a:hover::after, .navLinks a.active::after {
+  width: 100%;
+}
+
+.navLinks a.active {
+  opacity: 1;
+  color: #BF953F;
+}
+
+.navLinks a:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.icons {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.registerLink {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--foreground);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  transition: all 0.3s;
+  padding: 10px 20px;
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+}
+
+.registerLink:hover {
+  background: #BF953F;
+  color: #ffffff;
+  border-color: #BF953F;
+  opacity: 1;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 15px;
+  background: var(--glass);
+  border-radius: 100px;
+  border: 1px solid var(--glass-border);
+}
+
+.welcomeText {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #888888;
+  letter-spacing: 0.15em;
+}
+
+.userName {
+  font-weight: 900;
+  color: var(--foreground);
+}
+
+.logoutBtn {
+  background: transparent;
+  border: 1px solid #333333;
+  color: #eeeeee;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-radius: 4px;
+}
+
+.logoutBtn:hover {
+  background: #ff0000;
+  color: #ffffff;
+  border-color: #ff0000;
+}
+
+.adminBadge {
+  color: var(--accent-gold) !important;
+  font-weight: 900 !important;
+  border: 1px solid var(--accent-gold);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.65rem !important;
+}
+
+.adminBadge:hover {
+  background: var(--accent-gold);
+  color: #ffffff !important;
+}
+
+.cartIconWrapper, .wishlistIconWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 18px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 100px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.cartIconWrapper:hover, .wishlistIconWrapper:hover {
+  background: #111111;
+  transform: translateY(-2px);
+}
+
+.cartLabel {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #888888;
+  transition: all 0.3s ease;
+}
+
+.cartIconWrapper:hover .cartLabel {
+  color: #ffffff;
+}
+
+.cartIconBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cartSvg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--foreground);
+  transition: all 0.3s ease;
+}
+
+.cartIconWrapper:hover .cartSvg {
+  stroke: #ffffff;
+}
+
+.cartBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff0000;
+  color: #ffffff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #050505;
+}
+
+@media (max-width: 1200px) {
+  .container { padding: 0 2rem; }
+  .leftSection { gap: 2rem; }
+}
+
+@media (max-width: 1024px) {
+  .navLinks { display: none; }
+}
+.themeToggle {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--accent-gold);
+  padding: 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-right: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.themeToggle:hover {
+  background: var(--accent-gold);
+  color: #000000;
+  transform: scale(1.1) rotate(15deg);
+  box-shadow: 0 0 20px rgba(191, 149, 63, 0.3);
+}
+
+.toggleIconContainer {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.themeIcon {
+  width: 100%;
+  height: 100%;
+}
