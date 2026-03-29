@@ -2,15 +2,34 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background-color: var(--background);
-  background-image: var(--hero-overlay), url('https://images.unsplash.com/photo-1544457070-4cd773b4d71e?q=80&w=1800&auto=format&fit=crop');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  background-color: #000;
   display: flex;
   align-items: center;
   padding-top: 90px;
   overflow: hidden;
+}
+
+.heroBgContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.heroBgImage {
+  object-fit: cover;
+  opacity: 0.6;
+}
+
+.heroBgOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%, transparent 40%, #000 100%);
 }
 
 /* 1. Atmospheric Glows (Cinematic Lighting) */
@@ -231,7 +250,7 @@
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.5s ease;
   overflow: hidden;
 }
 
@@ -389,14 +408,25 @@
 .scrollLine {
   width: 1px;
   height: 80px;
-  background: linear-gradient(to bottom, #FFFFFF 50%, transparent 50%);
-  background-size: 100% 200%;
-  animation: scrollDown 2s cubic-bezier(0.8, 0, 0.2, 1) infinite;
+  background: #FFFFFF;
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes scrollDown {
-  0% { background-position: 100% 100%; }
-  100% { background-position: 100% -100%; }
+.scrollLine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  animation: scrollSlide 2s cubic-bezier(0.8, 0, 0.2, 1) infinite;
+}
+
+@keyframes scrollSlide {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
 }
 
 /* Removed UI Clutter */
@@ -447,6 +477,78 @@
   color: #D1D5DB;
   letter-spacing: 0.1em;
   z-index: 30;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+
+.modelNoteVisible {
+  opacity: 1;
+}
+
+.modelLoadingState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  text-align: center;
+}
+
+.threedPrompt {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.activateBtn {
+  background: rgba(191, 149, 63, 0.1);
+  border: 1px solid rgba(191, 149, 63, 0.3);
+  color: #BF953F;
+  padding: 1.5rem 3rem;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.activateBtn:hover {
+  background: rgba(191, 149, 63, 0.25);
+  border-color: #BF953F;
+  transform: scale(1.05);
+  box-shadow: 0 0 50px rgba(191, 149, 63, 0.3);
+}
+
+.pulseRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border: 2px solid #BF953F;
+  border-radius: 4px;
+  animation: pulseGold 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes pulseGold {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+.btnContent {
+  position: relative;
+  z-index: 2;
 }
 
 @media (max-width: 1024px) {

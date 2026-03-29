@@ -1,67 +1,11 @@
 "use client";
 
 import React, { Suspense, Component, ReactNode, useEffect, useRef } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Float } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import { OrbitControls, useGLTF, Float, View, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Apply cinematic, site-matching material overrides to the loaded model
-function WeaponModel({ isInteracting }: { isInteracting: boolean }) {
-  const { scene } = useGLTF('/lionguard_sword_and_shield.glb');
-  const groupRef = useRef<THREE.Group>(null);
 
-  useEffect(() => {
-    scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        const applyMaterial = (mat: THREE.Material) => {
-          if (mat instanceof THREE.MeshStandardMaterial) {
-            mat.color.set('#c5a028'); // Deeper Noble Gold (50% darkness balance)
-            mat.metalness = 0.9; // Increased for richer contrast in shadows
-            mat.roughness = 0.2;
-            mat.emissive = new THREE.Color('#330000'); // Subtle red
-            mat.emissiveIntensity = 0.2;
-            mat.envMapIntensity = 2.0; 
-            if (mat.normalMap) mat.normalMap = null;
-            if (mat.bumpMap) mat.bumpMap = null;
-            mat.needsUpdate = true;
-          }
-        };
-        if (Array.isArray(mesh.material)) {
-          mesh.material.forEach(applyMaterial);
-        } else {
-          applyMaterial(mesh.material);
-        }
-      }
-    });
-  }, [scene]);
-
-  // Controlled cinematic oscillation (Posing animation)
-  useFrame((state) => {
-    if (!groupRef.current || isInteracting) return;
-    const time = state.clock.getElapsedTime();
-    // Subtle floating Y oscillation
-    groupRef.current.position.y = Math.sin(time) * 0.1;
-    // Posing animation: slow rotation to left and right
-    groupRef.current.rotation.y = Math.sin(time * 0.3) * 0.5;
-  });
-
-  return (
-    <group ref={groupRef}>
-      <primitive object={scene} scale={0.55} />
-    </group>
-  );
-}
-
-// Scene setup to control tone mapping for a cinematic look
-function SceneSetup() {
-  const { gl } = useThree();
-  useEffect(() => {
-    gl.toneMapping = THREE.ACESFilmicToneMapping; // Cinematic film-style color grading
-    gl.toneMappingExposure = 1.2;
-  }, [gl]);
-  return null;
-}
 
 // Placeholder shown while loading or when file is missing
 function ModelFallback({ message = 'Loading 3D model...' }: { message?: string }) {
@@ -112,24 +56,76 @@ function InteractionHandler({ isInteracting, targetPos }: { isInteracting: boole
   return null;
 }
 
-export default function HeroModel() {
+// Apply cinematic, site-matching material overrides to the loaded model
+function WeaponModel({ isInteracting, onLoaded }: { isInteracting: boolean, onLoaded?: () => void }) {
+  const { scene } = useGLTF('/lionguard_sword_and_shield.glb');
+  const groupRef = useRef<THREE.Group>(null);
+
+  useEffect(() => {
+    if (scene) {
+      scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          const applyMaterial = (mat: THREE.Material) => {
+            if (mat instanceof THREE.MeshStandardMaterial) {
+              mat.color.set('#c5a028'); // Deeper Noble Gold (50% darkness balance)
+              mat.metalness = 0.9; // Increased for richer contrast in shadows
+              mat.roughness = 0.2;
+              mat.emissive = new THREE.Color('#330000'); // Subtle red
+              mat.emissiveIntensity = 0.2;
+              mat.envMapIntensity = 2.0; 
+              if (mat.normalMap) mat.normalMap = null;
+              if (mat.bumpMap) mat.bumpMap = null;
+              mat.needsUpdate = true;
+            }
+          };
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach(applyMaterial);
+          } else {
+            applyMaterial(mesh.material);
+          }
+        }
+      });
+      // Call onLoaded after processing materials
+      if (onLoaded) onLoaded();
+    }
+  }, [scene, onLoaded]);
+
+  // Controlled cinematic oscillation (Posing animation)
+  useFrame((state) => {
+    if (!groupRef.current || isInteracting) return;
+    const time = state.clock.getElapsedTime();
+    // Subtle floating Y oscillation
+    groupRef.current.position.y = Math.sin(time) * 0.1;
+    // Posing animation: slow rotation to left and right
+    groupRef.current.rotation.y = Math.sin(time * 0.3) * 0.5;
+  });
+
+  return (
+    <group ref={groupRef}>
+      <primitive object={scene} scale={0.35} dispose={null} />
+    </group>
+  );
+}
+
+export default function HeroModel({ onLoad }: { onLoad?: () => void }) {
   const [isInteracting, setIsInteracting] = React.useState(false);
-  const targetPos = useRef(new THREE.Vector3(0, 0, 8)).current;
 
   return (
     <ModelErrorBoundary>
-      <Canvas
-        camera={{ position: [0, 0, 8], fov: 45 }}
-        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 10 }}
-        gl={{ antialias: true, alpha: true }}
+      <View 
+        style={{ 
+          width: '100%', height: '100%', 
+          position: 'absolute', top: 0, left: 0, 
+          zIndex: 10 
+        }}
       >
-        <SceneSetup />
-        
+        <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
         <InteractionHandler 
           isInteracting={isInteracting} 
-          targetPos={targetPos} 
+          targetPos={new THREE.Vector3(0, 0, 5)} 
         />
-
+        
         {/* Cinematic 3-point lighting optimized for light theme */}
         <directionalLight position={[5, 5, 5]} intensity={4.1} color="#FFFFFF" />
         <directionalLight position={[-5, 2, 2]} intensity={1.2} color="#E50914" />
@@ -138,18 +134,17 @@ export default function HeroModel() {
 
         <Suspense fallback={null}>
           <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.4}>
-            <WeaponModel isInteracting={isInteracting} />
+            <WeaponModel isInteracting={isInteracting} onLoaded={onLoad} />
           </Float>
         </Suspense>
 
         <OrbitControls 
           enableZoom={false} 
           enablePan={false} 
-          makeDefault 
           onStart={() => setIsInteracting(true)}
           onEnd={() => setIsInteracting(false)}
         />
-      </Canvas>
+      </View>
     </ModelErrorBoundary>
   );
 }

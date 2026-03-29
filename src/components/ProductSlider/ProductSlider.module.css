@@ -114,13 +114,14 @@
 .progressBar {
   height: 100%;
   background: #BF953F;
-  width: 0%;
+  width: 100%;
+  transform-origin: left;
   animation: timerProgress 7s linear forwards;
 }
 
 @keyframes timerProgress {
-  from { width: 0%; }
-  to { width: 100%; }
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 /* Spotlight Frame */
@@ -131,7 +132,7 @@
   border: 1px solid #BF953F;
   border-radius: 40px;
   padding: 60px;
-  transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.8s ease, box-shadow 0.8s ease, border-color 0.8s ease;
   backdrop-filter: blur(25px);
   box-shadow: 
     0 40px 100px rgba(0, 0, 0, 0.4),
@@ -156,7 +157,8 @@
     transparent 100%
   );
   transform: rotate(25deg);
-  transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  backdrop-filter: blur(10px);
   pointer-events: none;
   z-index: 5;
 }
@@ -268,7 +270,7 @@
   object-fit: contain;
   padding: 10px;
   filter: drop-shadow(0 15px 40px rgba(0, 0, 0, 0.9)) brightness(1.15) contrast(1.1);
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
 }
 
 .spotlightFrame:hover .image {
@@ -315,7 +317,7 @@
   cursor: pointer;
   z-index: 15;
   letter-spacing: 0.15em;
-  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
   backdrop-filter: blur(10px);
 }
 

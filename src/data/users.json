@@ -62,5 +62,13 @@
     "password": "password123",
     "phone": "9887766554",
     "role": "user"
+  },
+  {
+    "id": "USR-1774628439591",
+    "name": "Reshanth R",
+    "email": "lemuriait2024@gmail.com",
+    "password": "Htnahser@9871",
+    "phone": "8056294950",
+    "role": "user"
   }
 ]

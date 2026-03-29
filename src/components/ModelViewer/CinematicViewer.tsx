@@ -1,11 +1,13 @@
 "use client";
 
 import React, { Suspense, Component, ReactNode, useEffect, useRef } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Float, Environment, Stage } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, useGLTF, Float, Environment, Stage, View, PerspectiveCamera } from '@react-three/drei';
 import { createPortal } from 'react-dom';
 import * as THREE from 'three';
 import styles from './ModelViewer.module.css';
+
+useGLTF.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
 
 interface CinematicViewerProps {
   src: string;
@@ -60,23 +62,15 @@ function DynamicModel({ src, modelRotation, modelRotationX, modelRotationZ }: { 
 
   return (
     <group ref={groupRef}>
-      <primitive object={scene} scale={1.8} />
+      <primitive object={scene} scale={1.8} dispose={null} />
     </group>
   );
 }
 
-function SceneSetup() {
-  const { gl, scene } = useThree();
-  useEffect(() => {
-    gl.toneMapping = THREE.ACESFilmicToneMapping;
-    gl.toneMappingExposure = 1.2;
-    scene.background = new THREE.Color('#f5f0eb');
-  }, [gl, scene]);
-  return null;
-}
 
 const CinematicViewer: React.FC<CinematicViewerProps> = ({ src, name, onClose, modelRotation, modelRotationX, modelRotationZ }) => {
   const [mounted, setMounted] = React.useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -103,13 +97,8 @@ const CinematicViewer: React.FC<CinematicViewerProps> = ({ src, name, onClose, m
         </button>
 
         <div className={styles.canvasContainer}>
-          <Canvas
-            camera={{ position: [0, 0, 5], fov: 45 }}
-            gl={{ antialias: true, alpha: true }}
-            className={styles.canvas}
-          >
-            <SceneSetup />
-            
+          <View className={styles.canvas}>
+            <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
             <ambientLight intensity={0.5} />
             <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2} />
             <pointLight position={[-10, -10, -10]} intensity={1} />
@@ -129,7 +118,7 @@ const CinematicViewer: React.FC<CinematicViewerProps> = ({ src, name, onClose, m
               minDistance={2}
               maxDistance={10}
             />
-          </Canvas>
+          </View>
         </div>
 
         <div className={styles.controlsHint}>

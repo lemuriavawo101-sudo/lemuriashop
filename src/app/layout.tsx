@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar/Navbar";
 import CheckoutDrawer from "@/components/Checkout/CheckoutDrawer";
 import Footer from "@/components/Footer/Footer";
 import { WishlistProvider } from "@/context/WishlistContext";
+import GlobalCanvasWrapper from "@/components/ModelViewer/GlobalCanvasWrapper";
 
 export const metadata: Metadata = {
   title: "LEMURIA | The Art of Blade",
@@ -32,16 +33,11 @@ export default function RootLayout({
       <head>
         <Script 
           src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
         />
         <Script 
           src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"
           strategy="afterInteractive"
-        />
-        <Script
-          type="module"
-          src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
-          strategy="beforeInteractive"
         />
       </head>
       <body style={{ position: 'relative' }}>
@@ -55,8 +51,10 @@ export default function RootLayout({
                   <Navbar />
                   <CheckoutDrawer />
                   <ScrollToTop />
-                  <main>{children}</main>
-                  <Footer />
+                   <main>{children}</main>
+                   <Footer />
+                   
+                   <GlobalCanvasWrapper />
                   
                   {/* Cinematic Aesthetic Layers */}
                   <div className="lightLeak"></div>

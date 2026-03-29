@@ -76,7 +76,7 @@ const Navbar: React.FC = () => {
               <Link href="/auth/signin" className={styles.registerLink}>SIGN IN / REGISTER</Link>
             )}
 
-            <Link href="/wishlist" className={styles.wishlistIconWrapper}>
+            <Link href="/wishlist" className={styles.wishlistIconWrapper} aria-label="View Wishlist">
               <span className={styles.cartLabel}>WISHLIST</span>
               <div className={styles.cartIconBox}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.cartSvg}>
@@ -86,7 +86,7 @@ const Navbar: React.FC = () => {
               </div>
             </Link>
 
-            <div className={styles.cartIconWrapper} onClick={handleCartClick}>
+            <div className={styles.cartIconWrapper} onClick={handleCartClick} role="button" aria-label="Open Shopping Cart">
               <span className={styles.cartLabel}>CART</span>
               <div className={styles.cartIconBox}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.cartSvg}>

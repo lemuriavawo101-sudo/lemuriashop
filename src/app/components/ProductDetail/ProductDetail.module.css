@@ -104,8 +104,8 @@
   cursor: pointer;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-  box-shadow: 0 15px 30px rgba(191, 149, 63, 0.2);
+  transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 15px 30px rgba(191, 149, 63, 0.15);
 }
 
 .floating3dBtn:hover {
@@ -328,7 +328,7 @@
   align-items: center;
   justify-content: center;
   gap: 15px;
-  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
   margin-bottom: 15px;
 }
 
@@ -532,7 +532,7 @@
   font-size: 1.5rem;
   cursor: pointer;
   color: #222;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .starBtn:hover {

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { Suspense, useRef, useState, useEffect } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { useGLTF, Stage, Environment } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import { useGLTF, Stage, Environment, View, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import styles from './ModelViewer.module.css';
 
@@ -43,7 +43,7 @@ function Model({ src, rotation, onUpdate }: {
 
   return (
     <group ref={groupRef}>
-      <primitive object={scene} scale={1.8} />
+      <primitive object={scene} scale={1.8} dispose={null} />
     </group>
   );
 }
@@ -56,6 +56,7 @@ const VisualRotator: React.FC<VisualRotatorProps> = ({ src, initialRotation, onC
   ));
   
   const modelRef = useRef<THREE.Group | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const lastMouse = useRef({ x: 0, y: 0 });
 
@@ -122,7 +123,8 @@ const VisualRotator: React.FC<VisualRotatorProps> = ({ src, initialRotation, onC
           onTouchEnd={handleMouseUp}
           style={{ cursor: 'grab' }}
         >
-          <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+          <View className={styles.canvas}>
+            <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
             <ambientLight intensity={0.5} />
             <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2} />
             
@@ -131,11 +133,11 @@ const VisualRotator: React.FC<VisualRotatorProps> = ({ src, initialRotation, onC
                 <Model 
                   src={src} 
                   rotation={rotation} 
-                  onUpdate={(ref) => modelRef.current = ref} 
+                  onUpdate={(group) => { modelRef.current = group; }} 
                 />
               </Stage>
             </Suspense>
-          </Canvas>
+          </View>
           
           <div className={styles.rotatorHint}>
             DRAG THE MODEL TO ROTATE

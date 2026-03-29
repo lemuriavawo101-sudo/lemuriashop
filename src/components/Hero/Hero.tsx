@@ -1,19 +1,38 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import styles from './Hero.module.css';
-
 
 // Dynamically import the 3D model with SSR disabled to prevent server mismatch crashes
 const HeroModel = dynamic(() => import('./HeroModel'), { 
   ssr: false,
-  loading: () => <p className={styles.modelNote}>[ INITIALIZING 3D ENGINE... ]</p>
+  loading: () => (
+    <div className={styles.modelLoadingState}>
+      <p className={styles.modelNote}>[ INITIALIZING 3D ENGINE... ]</p>
+    </div>
+  )
 });
 
 const Hero: React.FC = () => {
+  const [modelLoaded, setModelLoaded] = useState(false);
+
   return (
     <section className={styles.hero}>
+      {/* Optimized Background Image (LCP FIX) */}
+      <div className={styles.heroBgContainer}>
+        <Image
+          src="https://images.unsplash.com/photo-1544457070-4cd773b4d71e?q=80&w=1800&auto=format&fit=crop"
+          alt="Cinematic Heritage Background"
+          fill
+          priority
+          className={styles.heroBgImage}
+          sizes="100vw"
+        />
+        <div className={styles.heroBgOverlay}></div>
+      </div>
+
       {/* Cinematic Base */}
       <div className={styles.ambientGlowPrimary}></div>
       <div className={styles.ambientGlowSecondary}></div>
@@ -59,10 +78,10 @@ const Hero: React.FC = () => {
 
           {/* Action Buttons */}
           <div className={`${styles.actionGroup} ${styles.animateFadeInDelayedMore}`}>
-            <button className="btnPremium btnPremiumGold">
+            <button className="btnPremium btnPremiumGold" aria-label="Play Cinematic Weapon Showcase">
               <span className={styles.btnIcon}>▶</span> Play Showcase
             </button>
-            <button className="btnPremium btnPremiumGlass">
+            <button className="btnPremium btnPremiumGlass" aria-label="View Detailed Craftsmanship Information">
               <span className={styles.btnIcon}>ℹ</span> More Info
             </button>
           </div>
@@ -89,9 +108,23 @@ const Hero: React.FC = () => {
             <div className={styles.focusCoords}>LMR // 097-42 // SYST. ACTIVE</div>
           </div>
 
-          <HeroModel />
+          {/* Aggressive Performance: Click-to-Load 3D model Fixes LCP + Payload */}
+          {!modelLoaded && !modelLoaded && (
+            <div className={styles.threedPrompt}>
+              <button 
+                className={styles.activateBtn}
+                onClick={() => setModelLoaded(true)}
+                aria-label="Unlock 3D Cinematic Experience"
+              >
+                <span className={styles.pulseRing}></span>
+                <span className={styles.btnContent}>[ UNLOCK 3D EXPERIENCE ]</span>
+              </button>
+            </div>
+          )}
+
+          {modelLoaded && <HeroModel onLoad={() => setModelLoaded(true)} />}
           
-          <div className={styles.modelNote}>
+          <div className={`${styles.modelNote} ${modelLoaded ? styles.modelNoteVisible : ''}`}>
              [ LEMURIA SIGNATURE // MODEL-X ]
           </div>
         </div>
