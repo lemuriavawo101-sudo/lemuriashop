@@ -34,11 +34,13 @@ interface Product {
   reviewCount?: number;
 }
 
-const ProductCard = memo(({ product, addToCart, onOpen3D, onClick }: { 
+const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct, onHover }: { 
   product: Product; 
   addToCart: (product: any, variant: any) => void; 
   onOpen3D: (product: Product) => void;
   onClick: () => void;
+  onViewProduct: () => void;
+  onHover: () => void;
 }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [selectedVariant, setSelectedVariant] = useState(0);
@@ -65,6 +67,7 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick }: {
       ref={cardRef} 
       data-kinetic-card 
       onClick={onClick}
+      onMouseEnter={onHover}
       style={{ cursor: 'pointer' }}
     >
       <div className={styles.imageWrapper}>
@@ -176,6 +179,18 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick }: {
         >
           {isOutOfStock ? 'OUT OF STOCK' : 'ACQUIRE'} <span className={styles.arrow}>→</span>
         </button>
+
+        <button 
+          className="btnPremium btnPremiumGlass"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onViewProduct();
+          }}
+          style={{ width: '100%', marginTop: '12px' }}
+        >
+          VIEW PRODUCT <span className={styles.arrow}>→</span>
+        </button>
       </div>
     </div>
   );
@@ -197,36 +212,20 @@ const Dial = ({ products }: { products: Product[] }) => {
   const scrollFloat = useRef(0);
   const velocity = useRef(0);
   const dragDistance = useRef(0);
-  const autoDirection = useRef(0.8);
-  const targetScroll = useRef<number | null>(null);
   const lastTime = useRef(Date.now());
   const rafId = useRef<number>(0);
   const isVisible = useRef(false);
   const cardsCache = useRef<{el: HTMLElement, offsetLeft: number, width: number}[]>([]);
+  const targetCenter = useRef<number | null>(null); // For smooth centering animation
 
   useEffect(() => {
     if (!dialRef.current) return;
     
     const container = dialRef.current;
     
-    // 0. Restore scroll position if we came back from a product
-    const savedId = sessionStorage.getItem('lastDialProductId');
-    if (savedId && products.length > 0) {
-      const productId = Number(savedId);
-      const productIndex = products.findIndex(p => p.id === productId);
-      if (productIndex !== -1) {
-        // Wait for next frame to ensure cards are rendered/cached
-        setTimeout(() => {
-          const cards = container.querySelectorAll('[data-kinetic-card]');
-          const targetCard = cards[productIndex] as HTMLElement;
-          if (targetCard) {
-            const cardCenterInContainer = (targetCard.offsetLeft + targetCard.offsetWidth / 2);
-            const containerCenter = container.clientWidth / 2;
-            targetScroll.current = cardCenterInContainer - containerCenter;
-          }
-        }, 100);
-      }
-    }
+    // 0. Remove scroll restoration as it causes a "snap" on page load
+    // The user prefers the standard scroll behavior
+    sessionStorage.removeItem('lastDialProductId');
 
     // 1. Setup Intersection Observer to hibernate the loop
     const observer = new IntersectionObserver(
@@ -259,36 +258,24 @@ const Dial = ({ products }: { products: Product[] }) => {
       const maxScroll = container.scrollWidth - container.clientWidth;
 
       if (!isDown.current) {
-        const now = Date.now();
-        const timeSinceLastInteraction = now - lastTime.current;
-
-        // Auto-play / Oscillation logic
-        // Only resume auto-scroll if no interaction for 3 seconds
-        if (!isHovered.current && Math.abs(velocity.current) < 0.1 && timeSinceLastInteraction > 3000) {
-          scrollFloat.current += autoDirection.current;
-          
-          if (scrollFloat.current <= 0) {
-            scrollFloat.current = 0;
-            autoDirection.current = Math.abs(autoDirection.current);
-          } else if (scrollFloat.current >= maxScroll) {
-            scrollFloat.current = maxScroll;
-            autoDirection.current = -Math.abs(autoDirection.current);
-          }
-        }
- 
-        if (targetScroll.current !== null) {
-          const diff = targetScroll.current - scrollFloat.current;
+        // Check if we're animating toward a center target
+        if (targetCenter.current !== null) {
+          const diff = targetCenter.current - scrollFloat.current;
           if (Math.abs(diff) < 0.5) {
-            scrollFloat.current = targetScroll.current;
-            targetScroll.current = null;
+            // Close enough — finish the animation
+            scrollFloat.current = targetCenter.current;
+            targetCenter.current = null;
+            velocity.current = 0;
           } else {
-            scrollFloat.current += diff * 0.12; 
+            // Smooth lerp toward target (cinematic easing)
+            scrollFloat.current += diff * 0.08;
             velocity.current = 0;
           }
+        } else {
+          // Normal momentum scroll
+          scrollFloat.current += velocity.current;
+          velocity.current *= 0.95;
         }
- 
-        scrollFloat.current += velocity.current;
-        velocity.current *= 0.95; // More controlled friction
         
         if (scrollFloat.current < 0) scrollFloat.current = 0;
         if (scrollFloat.current > maxScroll) scrollFloat.current = maxScroll;
@@ -345,6 +332,7 @@ const Dial = ({ products }: { products: Product[] }) => {
     scrollLeft.current = dialRef.current?.scrollLeft || 0;
     scrollFloat.current = scrollLeft.current;
     velocity.current = 0;
+    targetCenter.current = null; // Cancel any centering animation on new drag
     if (dialRef.current) dialRef.current.style.cursor = 'grabbing';
   };
 
@@ -371,34 +359,30 @@ const Dial = ({ products }: { products: Product[] }) => {
     velocity.current = velocity.current * 0.4 + instantVelocity * 0.6;
   };
 
-  const handleCardClick = (e: React.MouseEvent, index: number, productId: number) => {
+  const handleCardClick = (index: number) => {
     // Prevent click if we dragged specifically (more than 5px)
     if (dragDistance.current > 5) return;
     
     // Prevent centering if we just finished a significant flick
     if (Math.abs(velocity.current) > 2) return;
 
+    // Smoothly animate the clicked card to center via the kinetic loop
     if (!dialRef.current) return;
-    const container = dialRef.current;
-    const cards = container.querySelectorAll('[data-kinetic-card]');
-    const clickedCard = cards[index] as HTMLElement;
+    const cards = dialRef.current.querySelectorAll('[data-kinetic-card]');
+    const card = cards[index] as HTMLElement;
+    if (!card) return;
 
-    if (clickedCard) {
-      const cardCenterInContainer = (clickedCard.offsetLeft + clickedCard.offsetWidth / 2);
-      const containerCenter = container.clientWidth / 2;
-      
-      // Target scroll position to center the card
-      targetScroll.current = cardCenterInContainer - containerCenter;
+    const containerWidth = dialRef.current.clientWidth;
+    const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+    const targetScrollPos = cardCenter - containerWidth / 2;
 
-      // Navigate to product page after a slight delay or immediately if already centered
-      // Save ID for return transition
-      sessionStorage.setItem('lastDialProductId', productId.toString());
-      
-      const isCentered = Math.abs(container.scrollLeft - targetScroll.current) < 50;
-      if (isCentered) {
-        router.push(`/products/${productId}`);
-      }
-    }
+    // Set the target — the update loop will smoothly lerp toward it
+    velocity.current = 0;
+    targetCenter.current = targetScrollPos;
+  };
+
+  const handleViewProduct = (productId: number) => {
+    router.push(`/products/${productId}`);
   };
 
   return (
@@ -419,7 +403,9 @@ const Dial = ({ products }: { products: Product[] }) => {
             product={product} 
             addToCart={addToCart} 
             onOpen3D={(p) => setSelected3D(p)}
-            onClick={() => handleCardClick(null as any, products.indexOf(product), product.id)}
+            onClick={() => handleCardClick(products.indexOf(product))}
+            onViewProduct={() => handleViewProduct(product.id)}
+            onHover={() => router.prefetch(`/products/${product.id}`)}
           />
         ))}
         <div className={styles.dialSpacer}></div>

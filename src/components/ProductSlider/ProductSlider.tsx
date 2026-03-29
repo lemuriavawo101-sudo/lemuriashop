@@ -40,6 +40,9 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
   const [imageError, setImageError] = useState(false);
   const [selected3D, setSelected3D] = useState<Product | null>(null);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const touchStartRef = useRef<number | null>(null);
+  const [wasDragged, setWasDragged] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const router = useRouter();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -62,30 +65,49 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
   }, [currentIndex]);
 
   useEffect(() => {
+    if (isFocused) return; // Stop auto-rotate in focus mode
+    
     const timer = setInterval(() => {
       handleNext();
     }, TIMER_DURATION);
     
     return () => clearInterval(timer);
-  }, [currentIndex, products.length]);
+  }, [currentIndex, products.length, isFocused]);
 
   const handleNext = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % products.length);
-      setIsTransitioning(false);
-    }, 600);
+    setCurrentIndex((prev) => (prev + 1) % products.length);
+    setIsFocused(false); // Reset focus on movement
   };
 
   const handlePrev = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev - 1 + products.length) % products.length);
-      setIsTransitioning(false);
-    }, 600);
+    setCurrentIndex((prev) => (prev - 1 + products.length) % products.length);
+    setIsFocused(false); // Reset focus on movement
   };
+
+  const handleDragStart = (clientX: number) => {
+    touchStartRef.current = clientX;
+    setWasDragged(false);
+  };
+
+  const handleDragEnd = (clientX: number) => {
+    if (touchStartRef.current === null) return;
+    const diff = touchStartRef.current - clientX;
+    
+    if (Math.abs(diff) > 30) { // Lower threshold for high-precision swipe
+      setWasDragged(true);
+      if (diff > 0) handleNext();
+      else handlePrev();
+    }
+    touchStartRef.current = null;
+  };
+
+  // Bridge touch events to drag handlers
+  const handleTouchStart = (e: React.TouchEvent) => handleDragStart(e.touches[0].clientX);
+  const handleTouchEnd = (e: React.TouchEvent) => handleDragEnd(e.changedTouches[0].clientX);
+  
+  // Mouse Support for Universal "Momentum"
+  const handleMouseDown = (e: React.MouseEvent) => handleDragStart(e.clientX);
+  const handleMouseUp = (e: React.MouseEvent) => handleDragEnd(e.clientX);
 
   if (products.length === 0) return null;
 
@@ -115,24 +137,56 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
             <h2 className={styles.sectionTitle}>DEAL OF THE MOMENT</h2>
           </div>
           <div className={styles.controlArea}>
-            <div className={styles.timerWrapper}>
+            <div 
+              className={styles.timerWrapper}
+              style={{ opacity: isFocused ? 0 : 1, pointerEvents: isFocused ? 'none' : 'auto' }}
+            >
               <div key={currentIndex} className={styles.progressBar}></div>
             </div>
             <div className={styles.manualNav}>
-              <button className={styles.navBtn} onClick={handlePrev}>←</button>
-              <button className={styles.navBtn} onClick={handleNext}>→</button>
+              <button 
+                className={styles.navBtn} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFocused(false);
+                  handlePrev();
+                }}
+              >←</button>
+              <button 
+                className={styles.navBtn} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFocused(false);
+                  handleNext();
+                }}
+              >→</button>
             </div>
           </div>
         </div>
 
         <div 
-          className={`${styles.spotlightFrame} ${isTransitioning ? styles.fade : ''}`}
+          className={`${styles.spotlightFrame} ${isTransitioning ? styles.fade : ''} ${isFocused ? styles.focused : ''}`}
+          onMouseEnter={() => router.prefetch(`/products/${product.id}`)}
           onClick={() => {
-            sessionStorage.setItem('lastSliderIndex', currentIndex.toString());
-            router.push(`/products/${product.id}`);
+            if (!wasDragged) {
+              setIsFocused(!isFocused);
+            }
           }}
-          style={{ cursor: 'pointer' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          style={{ cursor: isFocused ? 'default' : (wasDragged ? 'grabbing' : 'pointer') }}
         >
+          {isFocused && (
+            <button 
+              className={styles.closeFocus}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsFocused(false);
+              }}
+            >✕</button>
+          )}
           <div className={styles.decorationTL}></div>
           <div className={styles.decorationTR}></div>
           <div className={styles.decorationBL}></div>
@@ -260,12 +314,28 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    addToCart(product, selectedVariant);
+                    if (!isFocused) {
+                      setIsFocused(true);
+                    } else {
+                      addToCart(product, selectedVariant);
+                    }
                   }}
                   style={{ minWidth: '280px' }}
                 >
-                  {isCurrentVariantOutOfStock ? 'OUT OF STOCK' : 'ACQUIRE ARTIFACT'} <span className={styles.arrow}>→</span>
+                  {isCurrentVariantOutOfStock ? 'OUT OF STOCK' : (isFocused ? 'ACQUIRE ARTIFACT' : 'VIEW PRODUCT')} <span className={styles.arrow}>→</span>
                 </button>
+                {isFocused && (
+                  <button 
+                    className={styles.viewArchiveDetails}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sessionStorage.setItem('lastSliderIndex', currentIndex.toString());
+                      router.push(`/products/${product.id}`);
+                    }}
+                  >
+                    VIEW FULL HISTORY // LMR-{product.id}
+                  </button>
+                )}
                 <div className={styles.technicalNote}>LMR // UNIT-0{currentIndex + 1} // AUTHENTIC</div>
               </div>
             </div>

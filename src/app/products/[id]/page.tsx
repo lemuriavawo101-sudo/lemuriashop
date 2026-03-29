@@ -1,6 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getProductById, getReviews } from '@/lib/data';
+import { getProductById, getReviews, getProducts } from '@/lib/data';
 import ProductDetailView from '@/app/components/ProductDetail/ProductDetailView';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -13,6 +13,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: `${product.name} | Lemuria Heritage`,
     description: product.description,
   };
+}
+
+export async function generateStaticParams() {
+  const products = await getProducts();
+  return products.map((product: any) => ({
+    id: product.id.toString(),
+  }));
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {

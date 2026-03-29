@@ -16,7 +16,7 @@ const HeroModel = dynamic(() => import('./HeroModel'), {
 });
 
 const Hero: React.FC = () => {
-  const [modelLoaded, setModelLoaded] = useState(false);
+  const [modelLoaded, setModelLoaded] = useState(true);
 
   return (
     <section className={styles.hero}>
@@ -108,19 +108,7 @@ const Hero: React.FC = () => {
             <div className={styles.focusCoords}>LMR // 097-42 // SYST. ACTIVE</div>
           </div>
 
-          {/* Aggressive Performance: Click-to-Load 3D model Fixes LCP + Payload */}
-          {!modelLoaded && !modelLoaded && (
-            <div className={styles.threedPrompt}>
-              <button 
-                className={styles.activateBtn}
-                onClick={() => setModelLoaded(true)}
-                aria-label="Unlock 3D Cinematic Experience"
-              >
-                <span className={styles.pulseRing}></span>
-                <span className={styles.btnContent}>[ UNLOCK 3D EXPERIENCE ]</span>
-              </button>
-            </div>
-          )}
+          {/* 3D model loads automatically */}
 
           {modelLoaded && <HeroModel onLoad={() => setModelLoaded(true)} />}
           
