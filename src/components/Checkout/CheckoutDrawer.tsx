@@ -83,7 +83,9 @@ const CheckoutDrawer: React.FC = () => {
               productId: i.id, 
               variantSize: i.size, 
               quantity: i.quantity, 
-              name: i.name 
+              name: i.name,
+              // SANITIZATION: Remove local or relative paths that confuse Razorpay's CORS
+              image: i.image.startsWith('http') ? i.image : `https://${window.location.host}${i.image}`
             }))),
             total: total,
             customer: user?.name || 'Anonymous Practitioner',
@@ -128,7 +130,7 @@ const CheckoutDrawer: React.FC = () => {
         // GUARDIAN HANDSHAKE: Dual Path
         // 1. callback_url: Server-side backup for mobile/UPI redirects
         callback_url: successUrl.toString(),
-        redirect: false, // Prevents forced page reloads on desktop, keeps handler active
+       // Decoder path is managed globally in GlobalCanvas.tsx
         
         // 2. handler: Frontend high-speed path for desktop
         handler: function (response: any) {

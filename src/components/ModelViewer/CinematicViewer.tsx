@@ -10,7 +10,7 @@ import styles from './ModelViewer.module.css';
 import { usePerformance } from '@/context/PerformanceContext';
 import { gpuCache } from '@/lib/three-cache';
 
-useGLTF.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+// Decoder path is managed globally in GlobalCanvas.tsx
 
 interface CinematicViewerProps {
   src: string;

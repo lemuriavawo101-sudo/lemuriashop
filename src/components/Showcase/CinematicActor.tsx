@@ -128,5 +128,4 @@ const CinematicActor: React.FC<CinematicActorProps> = ({
 
 export default CinematicActor;
 
-// Preload the decoder globally to avoid repeated overhead
-useGLTF.preload('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
+// Decoder path is managed globally in GlobalCanvas.tsx
