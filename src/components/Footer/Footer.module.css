@@ -138,6 +138,61 @@
   color: #555555;
 }
 
+.performanceToggle {
+  margin-top: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.toggleLabel {
+  font-size: 0.65rem;
+  font-weight: 850;
+  letter-spacing: 0.15em;
+  color: #666;
+}
+
+.toggleButtons {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.toggleBtn {
+  background: transparent;
+  border: none;
+  color: #777;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.1em;
+}
+
+.toggleBtn:hover {
+  color: var(--foreground);
+}
+
+.toggleActive {
+  background: var(--accent-gold, #BF953F);
+  color: #000;
+  box-shadow: 0 4px 10px rgba(191, 149, 63, 0.3);
+}
+
+.autoNote {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--accent-gold, #BF953F);
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+
 @media (max-width: 1024px) {
   .container {
     grid-template-columns: 1fr 1fr;

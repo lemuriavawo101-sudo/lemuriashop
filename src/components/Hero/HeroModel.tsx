@@ -1,11 +1,10 @@
 "use client";
 
 import React, { Suspense, Component, ReactNode, useEffect, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Float, View, PerspectiveCamera } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, useGLTF, Float, PerspectiveCamera, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
-
-
+import { usePerformance } from '@/context/PerformanceContext';
 
 // Placeholder shown while loading or when file is missing
 function ModelFallback({ message = 'Loading 3D model...' }: { message?: string }) {
@@ -110,41 +109,61 @@ function WeaponModel({ isInteracting, onLoaded }: { isInteracting: boolean, onLo
 
 export default function HeroModel({ onLoad }: { onLoad?: () => void }) {
   const [isInteracting, setIsInteracting] = React.useState(false);
+  const { isLowPower } = usePerformance();
 
   return (
     <ModelErrorBoundary>
-      <View 
+      <div 
         style={{ 
           width: '100%', height: '100%', 
           position: 'absolute', top: 0, left: 0, 
           zIndex: 10 
         }}
       >
-        <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
-        <InteractionHandler 
-          isInteracting={isInteracting} 
-          targetPos={new THREE.Vector3(0, 0, 5)} 
-        />
-        
-        {/* Cinematic 3-point lighting optimized for light theme */}
-        <directionalLight position={[5, 5, 5]} intensity={4.1} color="#FFFFFF" />
-        <directionalLight position={[-5, 2, 2]} intensity={1.2} color="#E50914" />
-        <directionalLight position={[0, -5, -5]} intensity={0.8} color="#B38F00" />
-        <ambientLight intensity={0.4} />
+        <Canvas 
+          gl={{ 
+            antialias: !isLowPower,
+            alpha: true,
+            powerPreference: "high-performance",
+          }}
+          dpr={isLowPower ? 1 : [1, 2]}
+          camera={{ position: [0, 0, 5], fov: 45 }}
+          onCreated={(state) => {
+            state.gl.toneMapping = THREE.ACESFilmicToneMapping;
+            state.gl.toneMappingExposure = 1.2;
+          }}
+        >
+          <InteractionHandler 
+            isInteracting={isInteracting} 
+            targetPos={new THREE.Vector3(0, 0, 5)} 
+          />
+          
+          <directionalLight position={[5, 5, 5]} intensity={4.1} color="#FFFFFF" />
+          <directionalLight position={[-5, 2, 2]} intensity={1.2} color="#E50914" />
+          <directionalLight position={[0, -5, -5]} intensity={0.8} color="#B38F00" />
+          <ambientLight intensity={0.4} />
 
-        <Suspense fallback={null}>
-          <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.4}>
-            <WeaponModel isInteracting={isInteracting} onLoaded={onLoad} />
-          </Float>
-        </Suspense>
+          <Suspense fallback={null}>
+            <Environment preset="studio" />
+            <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.4}>
+              <WeaponModel isInteracting={isInteracting} onLoaded={onLoad} />
+            </Float>
+            <ContactShadows 
+              opacity={0.4} 
+              scale={10} 
+              blur={2.4} 
+              far={4.5} 
+            />
+          </Suspense>
 
-        <OrbitControls 
-          enableZoom={false} 
-          enablePan={false} 
-          onStart={() => setIsInteracting(true)}
-          onEnd={() => setIsInteracting(false)}
-        />
-      </View>
+          <OrbitControls 
+            enableZoom={false} 
+            enablePan={false} 
+            onStart={() => setIsInteracting(true)}
+            onEnd={() => setIsInteracting(false)}
+          />
+        </Canvas>
+      </div>
     </ModelErrorBoundary>
   );
 }

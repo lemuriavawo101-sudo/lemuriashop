@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import CinematicViewer from '@/components/ModelViewer/CinematicViewer';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePerformance } from '@/context/PerformanceContext';
 
 interface Product {
   id: number;
@@ -31,10 +32,13 @@ interface Product {
 const ProductDetailView = ({ product, initialReviews = [] }: { product: Product, initialReviews?: any[] }) => {
   const { addToCart } = useCart();
   const { user, isAuthenticated } = useAuth();
+  const { isLowPower, webGLSupported } = usePerformance();
   const router = useRouter();
   const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
   const [showModel, setShowModel] = useState(false);
   const [adding, setAdding] = useState(false);
+  
+  const show3D = webGLSupported && !isLowPower;
   
   const [reviews, setReviews] = useState<any[]>(initialReviews);
   const [newRating, setNewRating] = useState(0);
@@ -112,7 +116,7 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
                   className={styles.floating3dBtn}
                   onClick={() => setShowModel(true)}
                 >
-                  <FiMaximize2 /> EXPLORE IN 3D
+                  <FiMaximize2 /> {show3D ? 'EXPLORE IN 3D' : 'ENLARGE ARTIFACT'}
                 </button>
               )}
             </div>
@@ -295,6 +299,7 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
           <CinematicViewer
             src={product.model3d}
             name={product.name}
+            image={product.image}
             onClose={() => setShowModel(false)}
             modelRotation={product.modelRotation}
             modelRotationX={product.modelRotationX}

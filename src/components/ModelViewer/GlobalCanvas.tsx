@@ -4,18 +4,40 @@ import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { View, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+import { usePerformance } from '@/context/PerformanceContext';
 
 useGLTF.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
 
 const GlobalCanvas = () => {
   const [eventSource, setEventSource] = React.useState<HTMLElement | null>(null);
+  const { isLowPower, setWebGLSupported } = usePerformance();
 
   React.useEffect(() => {
-    setEventSource(document.body);
-  }, []);
+    // Defer to idle callback or timeout to prevent blocking the initial hydration
+    const deferWork = () => {
+      // Removed global document.body bind to reduce main-thread event overhead
+      
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) {
+          setWebGLSupported(false);
+        }
+      } catch (e) {
+        setWebGLSupported(false);
+      }
+    };
+
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(deferWork);
+    } else {
+      setTimeout(deferWork, 150);
+    }
+  }, [setWebGLSupported]);
 
   return (
     <div
+      id="global-canvas-root"
       style={{
         position: 'fixed',
         top: 0,
@@ -29,17 +51,18 @@ const GlobalCanvas = () => {
       <Canvas
         eventSource={eventSource || undefined}
         gl={{ 
-          antialias: true, 
+          antialias: !isLowPower, // Disable AA on low power for performance
           alpha: true,
-          powerPreference: "high-performance",
+          powerPreference: isLowPower ? "low-power" : "high-performance",
+          failIfMajorPerformanceCaveat: true,
         }}
-        dpr={[1, 2]}
-        shadows
+        dpr={isLowPower ? 1 : [1, 1.5]} // Limit DPR on low power
         style={{ pointerEvents: 'none' }}
         onCreated={(state) => {
           state.gl.toneMapping = THREE.ACESFilmicToneMapping;
           state.gl.toneMappingExposure = 1.2;
         }}
+        onError={() => setWebGLSupported(false)}
       >
         <View.Port />
       </Canvas>

@@ -25,8 +25,28 @@ const Cursor: React.FC = () => {
       mousePos.current = { x: e.clientX, y: e.clientY };
     };
 
-    const handleMouseEnter = () => setIsHovered(true);
-    const handleMouseLeave = () => setIsHovered(false);
+    /**
+     * PRECISION INTERACTION ENGINE
+     * Using global event delegation instead of individual listeners + MutationObserver.
+     * This drastically reduces hydration time and main-thread work.
+     */
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const interactive = target.closest('a, button, [role="button"], input[type="submit"], input[type="button"], label, .interactive, [data-cursor="hover"]');
+      
+      if (interactive && interactive.getAttribute('data-cursor') !== 'none') {
+        setIsHovered(true);
+      }
+    };
+
+    const handleMouseOut = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const interactive = target.closest('a, button, [role="button"], input[type="submit"], input[type="button"], label, .interactive, [data-cursor="hover"]');
+      
+      if (interactive) {
+        setIsHovered(false);
+      }
+    };
 
     const updateCursor = () => {
       const dotLag = 0.25;
@@ -38,50 +58,32 @@ const Cursor: React.FC = () => {
       haloPos.current.x += (mousePos.current.x - haloPos.current.x) * haloLag;
       haloPos.current.y += (mousePos.current.y - haloPos.current.y) * haloLag;
 
-      // Use left/top for positioning to allow CSS transform (translate -50%, -50%) 
-      // and brand-specific scaling to function without JS conflict.
+      // GPU-ACCELERATED TRANSFORMS
+      // Using translate3d prevents layout thrashing (Forced Reflow)
       if (dotRef.current) {
-        dotRef.current.style.left = `${dotPos.current.x}px`;
-        dotRef.current.style.top = `${dotPos.current.y}px`;
+        dotRef.current.style.transform = `translate3d(${dotPos.current.x}px, ${dotPos.current.y}px, 0)`;
       }
       if (haloRef.current) {
-        haloRef.current.style.left = `${haloPos.current.x}px`;
-        haloRef.current.style.top = `${haloPos.current.y}px`;
+        haloRef.current.style.transform = `translate3d(${haloPos.current.x}px, ${haloPos.current.y}px, 0)`;
       }
       if (sealRef.current) {
-        sealRef.current.style.left = `${haloPos.current.x}px`;
-        sealRef.current.style.top = `${haloPos.current.y}px`;
+        sealRef.current.style.transform = `translate3d(${haloPos.current.x}px, ${haloPos.current.y}px, 0)`;
       }
 
       requestAnimationFrame(updateCursor);
     };
 
     const rafId = requestAnimationFrame(updateCursor);
+    
     window.addEventListener('mousemove', handleMouseMove);
-
-    const attachHoverListeners = () => {
-      const selectors = 'a, button, [role="button"], input[type="submit"], input[type="button"], label, .interactive, [data-cursor="hover"]';
-      const elements = document.querySelectorAll(selectors);
-      elements.forEach(el => {
-        // Skip elements marked with data-cursor="none"
-        if (el.getAttribute('data-cursor') === 'none') return;
-        
-        el.addEventListener('mouseenter', handleMouseEnter);
-        el.addEventListener('mouseleave', handleMouseLeave);
-      });
-    };
-
-    attachHoverListeners();
-
-    const observer = new MutationObserver(() => {
-      attachHoverListeners();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    document.body.addEventListener('mouseover', handleMouseOver);
+    document.body.addEventListener('mouseout', handleMouseOut);
 
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener('mousemove', handleMouseMove);
-      observer.disconnect();
+      document.body.removeEventListener('mouseover', handleMouseOver);
+      document.body.removeEventListener('mouseout', handleMouseOut);
     };
   }, []);
 

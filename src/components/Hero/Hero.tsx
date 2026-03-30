@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import styles from './Hero.module.css';
+import { usePerformance } from '@/context/PerformanceContext';
 
 // Dynamically import the 3D model with SSR disabled to prevent server mismatch crashes
 const HeroModel = dynamic(() => import('./HeroModel'), { 
@@ -17,16 +18,19 @@ const HeroModel = dynamic(() => import('./HeroModel'), {
 
 const Hero: React.FC = () => {
   const [modelLoaded, setModelLoaded] = useState(true);
+  const { isLowPower, webGLSupported } = usePerformance();
+  const show3D = webGLSupported && !isLowPower;
 
   return (
     <section className={styles.hero}>
       {/* Optimized Background Image (LCP FIX) */}
       <div className={styles.heroBgContainer}>
         <Image
-          src="https://images.unsplash.com/photo-1544457070-4cd773b4d71e?q=80&w=1800&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1544457070-4cd773b4d71e?q=75&w=1200&auto=format&fit=crop"
           alt="Cinematic Heritage Background"
           fill
           priority
+          fetchPriority="high"
           className={styles.heroBgImage}
           sizes="100vw"
         />
@@ -95,7 +99,7 @@ const Hero: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: Free-Floating 3D Model */}
+        {/* Right Side: Free-Floating 3D Model or Fallback */}
         <div className={`${styles.mediaArea} ${styles.animateFadeInLate}`}>
           <div className={styles.weaponBackdrop}></div>
           
@@ -108,13 +112,33 @@ const Hero: React.FC = () => {
             <div className={styles.focusCoords}>LMR // 097-42 // SYST. ACTIVE</div>
           </div>
 
-          {/* 3D model loads automatically */}
-
-          {modelLoaded && <HeroModel onLoad={() => setModelLoaded(true)} />}
-          
-          <div className={`${styles.modelNote} ${modelLoaded ? styles.modelNoteVisible : ''}`}>
-             [ LEMURIA SIGNATURE // MODEL-X ]
-          </div>
+          {/* 3D model for capable devices, fallback image for low-end */}
+          {!show3D ? (
+            <div className={styles.heroFallbackImage}>
+              <Image
+                src="/lionguard_preview.png"
+                alt="Lemuria Signature Weapon"
+                width={500}
+                height={500}
+                style={{ objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.8))' }}
+                priority
+                onError={(e) => {
+                  // If the fallback image doesn't exist, show the emoji placeholder
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+              <div className={styles.modelNote} style={{ opacity: 1 }}>
+                [ 3D VIEW UNAVAILABLE ON THIS DEVICE ]
+              </div>
+            </div>
+          ) : (
+            <>
+              {modelLoaded && <HeroModel onLoad={() => setModelLoaded(true)} />}
+              <div className={`${styles.modelNote} ${modelLoaded ? styles.modelNoteVisible : ''}`}>
+                 [ LEMURIA SIGNATURE // MODEL-X ]
+              </div>
+            </>
+          )}
         </div>
 
 

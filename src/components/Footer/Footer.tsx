@@ -6,9 +6,11 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from './Footer.module.css';
 import { useAuth } from '@/context/AuthContext';
+import { usePerformance } from '@/context/PerformanceContext';
 
 const Footer: React.FC = () => {
   const { user } = useAuth();
+  const { performanceLevel, setPerformanceLevel, isLowPower } = usePerformance();
   const pathname = usePathname();
 
   const isAdmin = pathname?.startsWith('/admin');
@@ -32,16 +34,16 @@ const Footer: React.FC = () => {
             Lemuria Varmakalari Adimurai World Organization, is an unlisted private company incorporated on 14 September, 2021.
           </p>
           <div className={styles.socialLinks}>
-            <a href="#" className={styles.socialBtn} aria-label="Facebook">
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label="Facebook">
               <span className={styles.socialIcon}>f</span>
             </a>
-            <a href="#" className={styles.socialBtn} aria-label="X">
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label="X">
               <span className={styles.socialIcon}>𝕏</span>
             </a>
-            <a href="#" className={styles.socialBtn} aria-label="LinkedIn">
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label="LinkedIn">
               <span className={styles.socialIcon}>in</span>
             </a>
-            <a href="#" className={styles.socialBtn} aria-label="Instagram">
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label="Instagram">
               <span className={styles.socialIcon}>📷</span>
             </a>
           </div>
@@ -93,6 +95,36 @@ const Footer: React.FC = () => {
       
       <div className={styles.bottomBar}>
         <p>© {new Date().getFullYear()} LEMURIA HERITAGE. ALL RIGHTS RESERVED SELLING ETHICAL ARTIFACTS.</p>
+        
+        <div className={styles.performanceToggle}>
+          <span className={styles.toggleLabel}>EXPERIENCE MODE:</span>
+          <div className={styles.toggleButtons}>
+            <button 
+              className={`${styles.toggleBtn} ${performanceLevel === 'auto' ? styles.toggleActive : ''}`}
+              onClick={() => setPerformanceLevel('auto')}
+              title="Automatic detection based on hardware"
+            >
+              AUTO
+            </button>
+            <button 
+              className={`${styles.toggleBtn} ${performanceLevel === 'high' ? styles.toggleActive : ''}`}
+              onClick={() => setPerformanceLevel('high')}
+              title="Strict 3D High Fidelity"
+            >
+              CINEMATIC
+            </button>
+            <button 
+              className={`${styles.toggleBtn} ${performanceLevel === 'low' ? styles.toggleActive : ''}`}
+              onClick={() => setPerformanceLevel('low')}
+              title="Prioritize speed and compatibility"
+            >
+              LITE
+            </button>
+          </div>
+          {isLowPower && performanceLevel === 'auto' && (
+            <span className={styles.autoNote}>(LITE MODE ACTIVE)</span>
+          )}
+        </div>
       </div>
     </footer>
   );

@@ -7,6 +7,7 @@ import styles from './Collection.module.css';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import CinematicViewer from '../ModelViewer/CinematicViewer';
+import { usePerformance } from '@/context/PerformanceContext';
 
 interface Variant {
   size: string;
@@ -34,20 +35,22 @@ interface Product {
   reviewCount?: number;
 }
 
-const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct, onHover }: { 
+const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct }: { 
   product: Product; 
   addToCart: (product: any, variant: any) => void; 
   onOpen3D: (product: Product) => void;
   onClick: () => void;
   onViewProduct: () => void;
-  onHover: () => void;
 }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { isLowPower, webGLSupported } = usePerformance();
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [imageError, setImageError] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const variant = product.variants[selectedVariant];
   const itemInWishlist = isInWishlist(product.id);
+  
+  const show3D = webGLSupported && !isLowPower;
 
   const getIcon = (category: string) => {
     if (category === "Weapons") return "⚔️";
@@ -67,7 +70,6 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct
       ref={cardRef} 
       data-kinetic-card 
       onClick={onClick}
-      onMouseEnter={onHover}
       style={{ cursor: 'pointer' }}
     >
       <div className={styles.imageWrapper}>
@@ -123,7 +125,7 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct
               onOpen3D(product);
             }}
           >
-            <span>3D VIEW</span>
+            <span>{show3D ? '3D VIEW' : 'ENLARGE'}</span>
           </button>
         )}
       </div>
@@ -215,6 +217,7 @@ const Dial = ({ products }: { products: Product[] }) => {
   const lastTime = useRef(Date.now());
   const rafId = useRef<number>(0);
   const isVisible = useRef(false);
+  const lastInteractionTime = useRef(Date.now());
   const cardsCache = useRef<{el: HTMLElement, offsetLeft: number, width: number}[]>([]);
   const targetCenter = useRef<number | null>(null); // For smooth centering animation
 
@@ -232,7 +235,7 @@ const Dial = ({ products }: { products: Product[] }) => {
       ([entry]) => {
         isVisible.current = entry.isIntersecting;
       },
-      { threshold: 0.1 }
+      { threshold: 0 } // Wake up immediately on first pixel of scroll
     );
     observer.observe(container);
 
@@ -244,48 +247,68 @@ const Dial = ({ products }: { products: Product[] }) => {
         offsetLeft: (card as HTMLElement).offsetLeft,
         width: (card as HTMLElement).offsetWidth
       }));
+      // Initialize scroll position on mount
+      scrollFloat.current = container.scrollLeft;
     };
     updateCache();
+
     window.addEventListener('resize', updateCache);
 
+    // Drift direction: 1 = right, -1 = left
+    let driftDir = 1;
+
     const update = () => {
-      // Hibernate if off-screen to save CPU
       if (!isVisible.current) {
         rafId.current = requestAnimationFrame(update);
         return;
       }
 
+      const now = Date.now();
       const maxScroll = container.scrollWidth - container.clientWidth;
+      const timeSinceLastInput = now - lastInteractionTime.current;
 
       if (!isDown.current) {
-        // Check if we're animating toward a center target
         if (targetCenter.current !== null) {
+          // 1. Centering Animation
           const diff = targetCenter.current - scrollFloat.current;
           if (Math.abs(diff) < 0.5) {
-            // Close enough — finish the animation
             scrollFloat.current = targetCenter.current;
             targetCenter.current = null;
             velocity.current = 0;
           } else {
-            // Smooth lerp toward target (cinematic easing)
             scrollFloat.current += diff * 0.08;
             velocity.current = 0;
           }
-        } else {
-          // Normal momentum scroll
+          container.scrollLeft = scrollFloat.current;
+        } else if (Math.abs(velocity.current) > 0.05) {
+          // 2. Momentum
           scrollFloat.current += velocity.current;
           velocity.current *= 0.95;
+          if (scrollFloat.current < 0) scrollFloat.current = 0;
+          if (scrollFloat.current > maxScroll) scrollFloat.current = maxScroll;
+          container.scrollLeft = scrollFloat.current;
+        } else if (maxScroll > 0 && timeSinceLastInput > 2000) {
+          // 3. Cinematic Drift — slow ping-pong sweep
+          const speed = 0.5; // ~30px/sec at 60fps — gentle museum drift
+          scrollFloat.current += speed * driftDir;
+
+          if (scrollFloat.current >= maxScroll) {
+            scrollFloat.current = maxScroll;
+            driftDir = -1;
+          } else if (scrollFloat.current <= 0) {
+            scrollFloat.current = 0;
+            driftDir = 1;
+          }
+
+          container.scrollLeft = scrollFloat.current;
         }
-        
-        if (scrollFloat.current < 0) scrollFloat.current = 0;
-        if (scrollFloat.current > maxScroll) scrollFloat.current = maxScroll;
-        
-        container.scrollLeft = scrollFloat.current;
+      } else {
+        lastInteractionTime.current = now;
       }
 
-      // 3. Optimized 3D Distortion using cached offsets
-      const containerWidth = container.clientWidth;
-      const scrollPos = container.scrollLeft;
+      // 4. Optimized 3D Distortion using CACHED dimensions ONLY
+      const containerWidth = cardsCache.current[0]?.width * 2 || 1200;
+      const scrollPos = scrollFloat.current;
       const centerX = scrollPos + containerWidth / 2;
 
       cardsCache.current.forEach((card) => {
@@ -329,6 +352,7 @@ const Dial = ({ products }: { products: Product[] }) => {
     startX.current = e.pageX;
     dragDistance.current = 0;
     lastTime.current = Date.now();
+    lastInteractionTime.current = Date.now(); // Reset drift timer
     scrollLeft.current = dialRef.current?.scrollLeft || 0;
     scrollFloat.current = scrollLeft.current;
     velocity.current = 0;
@@ -405,7 +429,6 @@ const Dial = ({ products }: { products: Product[] }) => {
             onOpen3D={(p) => setSelected3D(p)}
             onClick={() => handleCardClick(products.indexOf(product))}
             onViewProduct={() => handleViewProduct(product.id)}
-            onHover={() => router.prefetch(`/products/${product.id}`)}
           />
         ))}
         <div className={styles.dialSpacer}></div>
@@ -415,6 +438,7 @@ const Dial = ({ products }: { products: Product[] }) => {
         <CinematicViewer 
           src={selected3D.model3d!} 
           name={selected3D.name} 
+          image={selected3D.image}
           onClose={() => setSelected3D(null)}
           modelRotation={selected3D.modelRotation}
           modelRotationX={selected3D.modelRotationX}
@@ -432,6 +456,18 @@ const Collection = ({ products }: { products: Product[] }) => {
 
   return (
     <section id="collection" className={styles.collection}>
+      <div className={styles.bgContainer}>
+        <Image 
+          src="/images/landscape_bg.jpg" 
+          alt="" 
+          fill 
+          className={styles.bgImage} 
+          priority={false}
+          loading="lazy" 
+          sizes="100vw"
+          quality={70}
+        />
+      </div>
       <div className={styles.kineticAura}></div>
       <div className={styles.container}>
         {categories.map((category) => {

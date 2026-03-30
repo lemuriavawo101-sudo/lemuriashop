@@ -1,12 +1,15 @@
 "use client";
 
+import dynamic from 'next/dynamic';
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styles from './ProductSlider.module.css';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import CinematicViewer from '../ModelViewer/CinematicViewer';
+import { usePerformance } from '@/context/PerformanceContext';
+
+const CinematicViewer = dynamic(() => import('../ModelViewer/CinematicViewer'), { ssr: false });
 
 interface Variant {
   size: string;
@@ -46,6 +49,7 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
   const router = useRouter();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { isLowPower, webGLSupported } = usePerformance();
   
   const TIMER_DURATION = 7000;
   
@@ -116,6 +120,7 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
   const isProductCompletelyOutOfStock = product.stock === 'Out of Stock' || (product.variants && product.variants.every(v => v.stock <= 0));
   const isCurrentVariantOutOfStock = product.stock === 'Out of Stock' || selectedVariant.stock <= 0;
   const itemInWishlist = isInWishlist(product?.id);
+  const show3D = webGLSupported && !isLowPower;
 
   const getIcon = (category: string) => {
     if (category === "Weapons") return "⚔️";
@@ -166,7 +171,6 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
 
         <div 
           className={`${styles.spotlightFrame} ${isTransitioning ? styles.fade : ''} ${isFocused ? styles.focused : ''}`}
-          onMouseEnter={() => router.prefetch(`/products/${product.id}`)}
           onClick={() => {
             if (!wasDragged) {
               setIsFocused(!isFocused);
@@ -240,7 +244,7 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
                         setSelected3D(product);
                       }}
                     >
-                      3D VIEW
+                      {show3D ? '3D VIEW' : 'ENLARGE'}
                     </button>
                   </div>
                 )}
@@ -347,6 +351,7 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
         <CinematicViewer 
           src={selected3D.model3d!} 
           name={selected3D.name} 
+          image={selected3D.image}
           onClose={() => setSelected3D(null)}
           modelRotation={selected3D.modelRotation}
           modelRotationX={selected3D.modelRotationX}

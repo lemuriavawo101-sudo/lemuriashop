@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { AnimatePresence } from 'framer-motion';
 import CinematicViewer from '@/components/ModelViewer/CinematicViewer';
+import { usePerformance } from '@/context/PerformanceContext';
 
 interface Product {
   id: number;
@@ -30,9 +31,12 @@ interface Product {
 const ProductGridCard = ({ product }: { product: Product }) => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { isLowPower, webGLSupported } = usePerformance();
   const [selected3D, setSelected3D] = useState<Product | null>(null);
   const variant = product.variants[0];
   const itemInWishlist = isInWishlist(product.id);
+  
+  const show3D = webGLSupported && !isLowPower;
   
   return (
     <>
@@ -75,7 +79,7 @@ const ProductGridCard = ({ product }: { product: Product }) => {
                 setSelected3D(product);
               }}
             >
-              3D VIEW
+              {show3D ? '3D VIEW' : 'ENLARGE'}
             </button>
           )}
         </div>
@@ -116,6 +120,7 @@ const ProductGridCard = ({ product }: { product: Product }) => {
           <CinematicViewer 
             src={selected3D.model3d!} 
             name={selected3D.name} 
+            image={selected3D.image}
             onClose={() => setSelected3D(null)}
             modelRotation={selected3D.modelRotation}
             modelRotationX={selected3D.modelRotationX}

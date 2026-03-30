@@ -58,7 +58,6 @@ const CheckoutDrawer: React.FC = () => {
     }
 
     try {
-      // 1. Create Order on Backend with Sanctuary Notes for Recovery
       const response = await fetch('/api/razorpay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,15 +77,12 @@ const CheckoutDrawer: React.FC = () => {
         })
       });
       const order = await response.json();
-      console.log('--- Acquisition Order Data ---', order);
 
       if (!order.id) {
-        console.error('CRITICAL: Order ID is missing.');
         alert('Artifact acquisition failed: No order ID returned.');
         return;
       }
 
-      // 2. Initialize Razorpay Checkout with Server Callback and Full Redirect
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: order.amount,
@@ -96,7 +92,7 @@ const CheckoutDrawer: React.FC = () => {
         image: '/favicon.svg', 
         order_id: order.id,
         callback_url: `${window.location.origin}/api/razorpay/callback`,
-        redirect: true, // FORCE FULL PAGE REDIRECT
+        redirect: true,
         prefill: {
           name: user?.name,
           email: user?.email,
@@ -109,12 +105,10 @@ const CheckoutDrawer: React.FC = () => {
 
       const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
-        console.error('Acquisition FAILED:', response.error);
         alert(`Acquisition Blocked: ${response.error.description}`);
       });
       rzp.open();
     } catch (error: any) {
-      console.error('Secure Connection Initiation Error:', error);
       alert('Secure connection failed: ' + (error.message || 'The checkout sanctuary is temporarily unreachable.'));
     }
   };
@@ -128,112 +122,137 @@ const CheckoutDrawer: React.FC = () => {
       
       <div className={`${styles.drawer} ${isCartOpen ? styles.drawerContentOpen : ''}`}>
         <div className={styles.header}>
-          <h2>YOUR COLLECTION</h2>
+          <h2>ACQUISITION SANCTUARY</h2>
           <button className={styles.closeBtn} onClick={() => setIsCartOpen(false)}>✕</button>
         </div>
 
-        <div className={styles.itemList}>
-          {cartItems.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p>Your sanctuary is empty.</p>
-              <button 
-                className={styles.checkoutBtn} 
-                onClick={() => setIsCartOpen(false)}
-              >
-                Explore Gallery
-              </button>
-            </div>
-          ) : (
-            cartItems.map((item, idx) => (
-              <div key={`${item.id}-${idx}`} className={styles.cartItem}>
-                <div className={styles.itemImage}>
-                  <Image src={item.image} alt={item.name} fill style={{ objectFit: 'contain' }} />
+        <div className={styles.drawerBody}>
+          <div className={styles.itemList}>
+            {cartItems.length === 0 ? (
+              <div className={styles.emptyState}>
+                <p>Your sanctuary is currently empty.</p>
+                <button 
+                  className={styles.exploreBtn} 
+                  onClick={() => setIsCartOpen(false)}
+                >
+                  Explore Artifact Gallery
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className={styles.listHeader}>
+                  <h3>YOUR COLLECTION ({cartCount})</h3>
                 </div>
-                <div className={styles.itemDetails}>
-                  <h4>{item.name}</h4>
-                  <p className={styles.itemMeta}>{item.size} • QTY: {item.quantity}</p>
-                  <span className={styles.itemPrice}>₹{item.price.toLocaleString()}</span>
-                  <br />
-                  <button 
-                    className={styles.removeBtn} 
-                    onClick={() => removeFromCart(item.id, item.size)}
-                  >
-                    Remove Artifact
-                  </button>
+                {cartItems.map((item, idx) => (
+                  <div key={`${item.id}-${idx}`} className={styles.cartItem}>
+                    <div className={styles.itemImage}>
+                      <Image src={item.image} alt={item.name} fill style={{ objectFit: 'contain' }} />
+                    </div>
+                    <div className={styles.itemDetails}>
+                      <h4>{item.name}</h4>
+                      <p className={styles.itemMeta}>{item.size} • QTY: {item.quantity}</p>
+                      <span className={styles.itemPrice}>₹{item.price.toLocaleString()}</span>
+                      <button 
+                        className={styles.removeBtn} 
+                        onClick={() => removeFromCart(item.id, item.size)}
+                      >
+                        Remove Artifact
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+
+          {cartItems.length > 0 && (
+            <div className={styles.checkoutPanel}>
+              <div className={styles.deliveryForm}>
+                <div className={styles.panelHeader}>
+                  <h3>DELIVERY DESTINATION</h3>
+                  <p>Provide sanctuary coordinates for secure dispatch.</p>
+                </div>
+                
+                <div className={styles.inputGroup}>
+                  <label>PRACTITIONER CONTACT</label>
+                  <input 
+                    type="tel" 
+                    placeholder="10 Digits" 
+                    value={delivery.contact}
+                    onChange={(e) => setDelivery({...delivery, contact: e.target.value.replace(/\D/g, '')})}
+                    onBlur={() => setTouched({...touched, contact: true})}
+                  />
+                  {touched.contact && !validateContact(delivery.contact) && (
+                    <span className={styles.inputHint}>Minimum 10 numeric digits required</span>
+                  )}
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <label>SANCTUARY ADDRESS</label>
+                  <textarea 
+                    placeholder="Full street, building, and apartment details" 
+                    rows={4}
+                    value={delivery.address}
+                    onChange={(e) => setDelivery({...delivery, address: e.target.value})}
+                    onBlur={() => setTouched({...touched, address: true})}
+                  />
+                  {touched.address && !validateAddress(delivery.address) && (
+                    <span className={styles.inputHint}>Minimum 10 characters required for dispatch</span>
+                  )}
+                </div>
+
+                <div className={styles.inputRow}>
+                  <div className={styles.inputGroup}>
+                    <label>PINCODE</label>
+                    <input 
+                      type="text" 
+                      placeholder="6 Digits" 
+                      value={delivery.pincode}
+                      onChange={(e) => setDelivery({...delivery, pincode: e.target.value.replace(/\D/g, '')})}
+                      onBlur={() => setTouched({...touched, pincode: true})}
+                    />
+                    {touched.pincode && !validatePincode(delivery.pincode) && (
+                      <span className={styles.inputHint}>Valid 6-digit pincode required</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))
+
+              <div className={styles.orderSummary}>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Subtotal</span>
+                  <span className={styles.summaryValue}>₹{subtotal.toLocaleString()}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Hereditary Tax (GST 18%)</span>
+                  <span className={styles.summaryValue}>₹{tax.toLocaleString()}</span>
+                </div>
+                <div className={styles.totalRow}>
+                  <div className={styles.totalLabelGroup}>
+                    <span className={styles.totalLabel}>TOTAL COST</span>
+                    <span className={styles.totalNote}>INCLUSIVE OF ALL TAXES</span>
+                  </div>
+                  <span className={styles.totalValue}>₹{total.toLocaleString()}</span>
+                </div>
+
+                <button 
+                  className={styles.checkoutBtn} 
+                  onClick={handlePayment}
+                  disabled={!isFormValid}
+                >
+                  {isFormValid ? 'SECURE ACQUISITION' : 'PROVIDE COORDINATES TO ACQUIRE'}
+                </button>
+                <div className={styles.securitySeal}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.lockIcon}>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  <span>SECURED BY RAZORPAY ACQUISITION ENGINE • 256-BIT ENCRYPTION</span>
+                </div>
+              </div>
+            </div>
           )}
         </div>
-
-        {cartItems.length > 0 && (
-          <div className={styles.footer}>
-            <div className={styles.deliveryForm}>
-              <h3>DELIVERY SANCTUARY</h3>
-              
-              <div className={styles.inputGroup}>
-                <input 
-                  type="tel" 
-                  placeholder="Practitioner Contact (10 Digits)" 
-                  value={delivery.contact}
-                  onChange={(e) => setDelivery({...delivery, contact: e.target.value.replace(/\D/g, '')})}
-                  onBlur={() => setTouched({...touched, contact: true})}
-                />
-                {touched.contact && !validateContact(delivery.contact) && (
-                  <span className={styles.inputHint}>Minimum 10 numeric digits required</span>
-                )}
-              </div>
-
-              <div className={styles.inputGroup}>
-                <textarea 
-                  placeholder="Complete Heritage Destination (Full Address)" 
-                  rows={2}
-                  value={delivery.address}
-                  onChange={(e) => setDelivery({...delivery, address: e.target.value})}
-                  onBlur={() => setTouched({...touched, address: true})}
-                />
-                {touched.address && !validateAddress(delivery.address) && (
-                  <span className={styles.inputHint}>Minimum 10 characters required for dispatch</span>
-                )}
-              </div>
-
-              <div className={styles.inputGroup}>
-                <input 
-                  type="text" 
-                  placeholder="Pincode (6 Digits)" 
-                  value={delivery.pincode}
-                  onChange={(e) => setDelivery({...delivery, pincode: e.target.value.replace(/\D/g, '')})}
-                  onBlur={() => setTouched({...touched, pincode: true})}
-                />
-                {touched.pincode && !validatePincode(delivery.pincode) && (
-                  <span className={styles.inputHint}>Valid 6-digit pincode required</span>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.summaryRow}>
-              <span className={styles.summaryLabel}>Subtotal</span>
-              <span className={styles.summaryValue}>₹{subtotal.toLocaleString()}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span className={styles.summaryLabel}>Hereditary Tax (GST 18%)</span>
-              <span className={styles.summaryValue}>₹{tax.toLocaleString()}</span>
-            </div>
-            <div className={`${styles.summaryRow} ${styles.totalRow}`}>
-              <span className={styles.totalLabel}>TOTAL ACQUISITION</span>
-              <span className={styles.totalValue}>₹{total.toLocaleString()}</span>
-            </div>
-
-            <button 
-              className={styles.checkoutBtn} 
-              onClick={handlePayment}
-              disabled={!isFormValid}
-            >
-              {isFormValid ? 'SECURE ACQUISITION' : 'COMPLETE FORM TO UNLOCK'}
-            </button>
-            <span className={styles.paymentNote}>SECURED BY RAZORPAY • 256-BIT ENCRYPTION</span>
-          </div>
-        )}
       </div>
     </>
   );

@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar/Navbar";
 import CheckoutDrawer from "@/components/Checkout/CheckoutDrawer";
 import Footer from "@/components/Footer/Footer";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { PerformanceProvider } from "@/context/PerformanceContext";
 import GlobalCanvasWrapper from "@/components/ModelViewer/GlobalCanvasWrapper";
 
 export const metadata: Metadata = {
@@ -32,13 +33,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <Script 
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="lazyOnload"
         />
         <Script 
           src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
       </head>
       <body style={{ position: 'relative' }}>
@@ -54,27 +57,29 @@ export default function RootLayout({
           shadow="0 0 10px #BF953F,0 0 5px #BF953F"
         />
         <ThemeProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <CartProvider>
-                <WishlistProvider>
-                  <SmoothScroll />
-                  <Cursor />
-                  <Navbar />
-                  <CheckoutDrawer />
-                  <ScrollToTop />
-                   <main>{children}</main>
-                   <Footer />
-                   
-                   <GlobalCanvasWrapper />
-                  
-                  {/* Cinematic Aesthetic Layers */}
-                  <div className="lightLeak"></div>
-                  <div className="noise"></div>
-                </WishlistProvider>
-              </CartProvider>
-            </AuthProvider>
-          </ToastProvider>
+          <PerformanceProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <WishlistProvider>
+                    <SmoothScroll />
+                    <Cursor />
+                    <Navbar />
+                    <CheckoutDrawer />
+                    <ScrollToTop />
+                     <main>{children}</main>
+                     <Footer />
+                     
+                     <GlobalCanvasWrapper />
+                    
+                    {/* Cinematic Aesthetic Layers */}
+                    <div className="lightLeak"></div>
+                    <div className="noise"></div>
+                  </WishlistProvider>
+                </CartProvider>
+              </AuthProvider>
+            </ToastProvider>
+          </PerformanceProvider>
         </ThemeProvider>
       </body>
     </html>

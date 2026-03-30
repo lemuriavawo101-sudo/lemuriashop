@@ -1,21 +1,31 @@
+import React, { Suspense } from 'react';
 import Hero from '@/components/Hero/Hero';
-import ProductSlider from '@/components/ProductSlider/ProductSlider';
-import Collection from '@/components/Collection/Collection';
+import HomeClient from '@/components/Home/HomeClient';
 import { getProducts, getDeals } from '@/lib/data';
 
 export const revalidate = 3600; // Revalidate every hour
 
-export default async function Home() {
+async function AsyncHomeContents() {
   const [allProducts, dealProducts] = await Promise.all([
     getProducts(),
     getDeals()
   ]);
 
   return (
+    <HomeClient 
+      allProducts={allProducts as any} 
+      dealProducts={dealProducts as any} 
+    />
+  );
+}
+
+export default function Home() {
+  return (
     <main>
       <Hero />
-      <ProductSlider products={dealProducts as any} />
-      <Collection products={allProducts as any} />
+      <Suspense fallback={<div style={{ height: '800px', width: '100%', background: 'transparent' }} />}>
+        <AsyncHomeContents />
+      </Suspense>
     </main>
   );
 }
