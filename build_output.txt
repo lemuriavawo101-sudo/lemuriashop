@@ -1,0 +1,85 @@
+﻿
+> lemuria-shop@0.1.0 build
+> next build
+
+node.exe : ΓÜá Warning: Next.js inferred your workspace root, but it 
+may not be correct.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Users\BlackJokeR\AppData\Roa ...
++ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ΓÜá Warning: Ne...not be 
+co    rrect.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ We detected multiple lockfiles and selected the directory of 
+C:\Users\BlackJokeR\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js 
+config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js
+/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\BlackJokeR\lemuria new shop\package-lock.json
+
+Γû▓ Next.js 16.2.1 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ┬╖ optimizePackageImports
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 5.8s
+  Running TypeScript ...
+  Finished TypeScript in 5.0s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/43) ...
+  Generating static pages using 11 workers (10/43) 
+  Generating static pages using 11 workers (21/43) 
+  Generating static pages using 11 workers (32/43) 
+Γ£ô Generating static pages using 11 workers (43/43) in 2.2s
+  Finalizing page optimization ...
+
+Route (app)                 Revalidate  Expire
+Γöî Γùï /                               1h      1y
+Γö£ Γùï /_not-found
+Γö£ Γùï /admin
+Γö£ ╞Æ /api/admin/backfill
+Γö£ ╞Æ /api/admin/db-sync
+Γö£ ╞Æ /api/admin/enquiries
+Γö£ ╞Æ /api/admin/login
+Γö£ ╞Æ /api/admin/seed
+Γö£ ╞Æ /api/auth/profile
+Γö£ ╞Æ /api/auth/register
+Γö£ ╞Æ /api/auth/signin
+Γö£ ╞Æ /api/categories
+Γö£ ╞Æ /api/contact
+Γö£ ╞Æ /api/deals
+Γö£ ╞Æ /api/orders
+Γö£ ╞Æ /api/products
+Γö£ ╞Æ /api/razorpay
+Γö£ ╞Æ /api/razorpay/callback
+Γö£ ╞Æ /api/razorpay/status
+Γö£ ╞Æ /api/razorpay/verify
+Γö£ ╞Æ /api/reviews
+Γö£ ╞Æ /api/showcase
+Γö£ ╞Æ /api/upload
+Γö£ ╞Æ /api/users
+Γö£ Γùï /auth/complete-profile
+Γö£ Γùï /auth/register
+Γö£ Γùï /auth/signin
+Γö£ Γùï /checkout/success
+Γö£ Γùï /contact
+Γö£ Γùï /my-orders
+Γö£ ╞Æ /products
+Γö£ ΓùÅ /products/[id]
+Γöé Γö£ /products/1
+Γöé Γö£ /products/2
+Γöé Γö£ /products/4
+Γöé Γöö [+7 more paths]
+Γöö Γùï /wishlist
+
+
+Γùï  (Static)   prerendered as static content
+ΓùÅ  (SSG)      prerendered as static HTML (uses generateStaticParams)
+╞Æ  (Dynamic)  server-rendered on demand
+

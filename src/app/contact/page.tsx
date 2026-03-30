@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './contact.module.css';
 
-export default function ContactPage() {
+function ContactPageInner() {
   const searchParams = useSearchParams();
   const subjectParam = searchParams.get('subject');
 
@@ -387,5 +387,13 @@ export default function ContactPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh' }} />}>
+      <ContactPageInner />
+    </Suspense>
   );
 }

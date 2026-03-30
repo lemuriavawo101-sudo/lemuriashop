@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { getProductById, getReviews, getProducts } from '@/lib/data';
 import ProductDetailView from '@/app/components/ProductDetail/ProductDetailView';
@@ -35,5 +35,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     notFound();
   }
 
-  return <ProductDetailView product={product} initialReviews={reviews} />;
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh' }} />}>
+      <ProductDetailView product={product} initialReviews={reviews} />
+    </Suspense>
+  );
 }

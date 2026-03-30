@@ -29,7 +29,7 @@ export default function MyOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`/api/orders?userId=${user?.id}`);
+      const res = await fetch(`/api/orders?userId=${user?.uid}`);
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch (error) {
