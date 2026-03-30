@@ -29,6 +29,8 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
         ],
       },
       {

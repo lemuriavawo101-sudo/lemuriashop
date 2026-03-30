@@ -6,7 +6,7 @@ import { View, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { usePerformance } from '@/context/PerformanceContext';
 
-useGLTF.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
+useGLTF.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
 
 const GlobalCanvas = () => {
   const [eventSource, setEventSource] = React.useState<HTMLElement | null>(null);

@@ -123,7 +123,7 @@ const CheckoutDrawer: React.FC = () => {
         currency: order.currency,
         name: 'LEMURIA Heritage',
         description: 'Artifact Acquisition',
-        image: '/favicon.svg', 
+        image: `https://${window.location.host}/favicon.svg`, 
         order_id: order.id,
         // GUARDIAN HANDSHAKE: Dual Path
         // 1. callback_url: Server-side backup for mobile/UPI redirects
