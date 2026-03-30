@@ -9,8 +9,8 @@ import styles from './ProductDetail.module.css';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import CinematicViewer from '@/components/ModelViewer/CinematicViewer';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { usePerformance } from '@/context/PerformanceContext';
 
 interface Product {
@@ -34,9 +34,11 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
   const { user, isAuthenticated } = useAuth();
   const { isLowPower, webGLSupported } = usePerformance();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
   const [showModel, setShowModel] = useState(false);
   const [adding, setAdding] = useState(false);
+  const reviewSectionRef = useRef<HTMLElement>(null);
   
   const show3D = webGLSupported && !isLowPower;
   
@@ -44,6 +46,14 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('review') === 'true' && reviewSectionRef.current) {
+      setTimeout(() => {
+        reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 500); // Slight delay to ensure paint
+    }
+  }, [searchParams]);
 
   const handleAddToCart = () => {
     setAdding(true);
@@ -226,7 +236,7 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
         </div>
 
         {/* Reviews Section */}
-        <section className={styles.reviewsSection}>
+        <section ref={reviewSectionRef} className={styles.reviewsSection}>
           <h2 className={styles.reviewsTitle}>PRACTITIONER FEEDBACK</h2>
           
           <div className={styles.reviewGrid}>

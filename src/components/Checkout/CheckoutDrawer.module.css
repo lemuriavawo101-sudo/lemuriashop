@@ -329,7 +329,7 @@
 }
 
 .totalValue {
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 6vw, 2.5rem);
   color: #BF953F;
   font-weight: 900;
   font-family: var(--font-outfit);
@@ -421,24 +421,37 @@
 
 @media (max-width: 640px) {
   .header {
-    padding: 30px;
+    padding: 20px;
   }
   
   .itemList, .checkoutPanel {
-    padding: 40px 30px;
+    padding: 30px 20px;
   }
   
   .cartItem {
     grid-template-columns: 1fr;
-    gap: 25px;
-    padding: 25px;
+    gap: 20px;
+    padding: 20px;
   }
   
   .itemDetails h4 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
   }
   
   .totalValue {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
+
+  .checkoutBtn {
+    padding: 20px;
+    font-size: 0.9rem;
+    letter-spacing: 0.3em;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h2 { letter-spacing: 0.4em; font-size: 0.8rem; }
+  .cartItem { padding: 15px; }
+  .itemPrice { font-size: 1.2rem; }
+  .totalRow { padding: 20px 0; margin: 25px 0; }
 }

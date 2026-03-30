@@ -157,10 +157,10 @@
 
 .productName {
   font-family: var(--font-serif);
-  font-size: 4rem;
+  font-size: clamp(2.2rem, 8vw, 4rem);
   font-weight: 700;
   letter-spacing: 0.05em;
-  line-height: 0.9;
+  line-height: 1;
   margin-bottom: 25px;
   text-transform: uppercase;
 }
@@ -205,7 +205,7 @@
 }
 
 .price {
-  font-size: 4rem;
+  font-size: clamp(2.5rem, 10vw, 4rem);
   font-weight: 950;
   letter-spacing: -0.05em;
 }
@@ -437,6 +437,18 @@
   .container { padding: 0 20px; }
   .mainImageWrapper { height: 350px; }
   .specsGrid { grid-template-columns: 1fr; }
+  .ratingRow { margin-bottom: 25px; }
+}
+
+@media (max-width: 480px) {
+  .mainImageWrapper { height: 300px; border-radius: 24px; }
+  .mainImage { padding: 30px; }
+  .buyBox { padding: 25px; }
+  .detailPage { padding-top: 80px; }
+  .thumbnailStrip { gap: 10px; }
+  .thumbActive { width: 60px; height: 60px; }
+  .priceRow { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .oldPrice { margin-left: 0; font-size: 1.4rem; }
 }
 
 /* Ratings & Reviews Section */

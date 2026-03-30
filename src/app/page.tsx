@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import Hero from '@/components/Hero/Hero';
 import HomeClient from '@/components/Home/HomeClient';
-import { getProducts, getDeals } from '@/lib/data';
+import { getProducts, getDeals, getShowcaseItems } from '@/lib/data';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -19,10 +19,12 @@ async function AsyncHomeContents() {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const showcaseProducts = await getShowcaseItems();
+
   return (
     <main>
-      <Hero />
+      <Hero products={showcaseProducts as any} />
       <Suspense fallback={<div style={{ height: '800px', width: '100%', background: 'transparent' }} />}>
         <AsyncHomeContents />
       </Suspense>

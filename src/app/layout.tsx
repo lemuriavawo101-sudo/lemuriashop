@@ -25,6 +25,8 @@ import SmoothScroll from "@/components/SmoothScroll/SmoothScroll";
 import ScrollToTop from "@/components/ScrollToTop/ScrollToTop";
 import NextTopLoader from 'nextjs-toploader';
 
+import CinematicShowcase from "@/components/Showcase/CinematicShowcase";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,7 +39,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <Script 
           src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="lazyOnload"
+          strategy="afterInteractive"
         />
         <Script 
           src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"
@@ -55,6 +57,7 @@ export default function RootLayout({
           easing="ease" 
           speed={200} 
           shadow="0 0 10px #BF953F,0 0 5px #BF953F"
+          zIndex={9999}
         />
         <ThemeProvider>
           <PerformanceProvider>
@@ -71,6 +74,7 @@ export default function RootLayout({
                      <Footer />
                      
                      <GlobalCanvasWrapper />
+                     <CinematicShowcase />
                     
                     {/* Cinematic Aesthetic Layers */}
                     <div className="lightLeak"></div>

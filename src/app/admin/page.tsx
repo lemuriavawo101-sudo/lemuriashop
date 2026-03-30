@@ -54,13 +54,26 @@ interface User {
   role: string;
 }
 
+interface Enquiry {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  measurements?: string;
+  materials?: string;
+  status: string;
+  date: string;
+}
+
 const CATEGORIES = [
   "Weapons", "Decoration", "Books", "Attire", "Tools"
 ];
 
 const TAGS = ["", "Highlight", "Spotlight", "New", "Exclusive"];
 
-const Sidebar = ({ activeView, setActiveView, counts }: { activeView: any, setActiveView: (v: any) => void, counts: { lowStock: number, pendingOrders: number } }) => (
+const Sidebar = ({ activeView, setActiveView, counts }: { activeView: any, setActiveView: (v: any) => void, counts: { lowStock: number, pendingOrders: number, newEnquiries: number } }) => (
   <div className={styles.sidebar}>
     <div className={styles.logo}>LEMURIA</div>
     <nav className={styles.nav}>
@@ -68,39 +81,60 @@ const Sidebar = ({ activeView, setActiveView, counts }: { activeView: any, setAc
         className={`${styles.navItem} ${activeView === 'inventory' ? styles.navItemActive : ''}`}
         onClick={() => setActiveView('inventory')}
       >
-        Inventory
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        <span>Inventory</span>
         {counts.lowStock > 0 && <span className={styles.navBadge}>{counts.lowStock}</span>}
       </button>
       <button 
         className={`${styles.navItem} ${activeView === 'orders' ? styles.navItemActive : ''}`}
         onClick={() => setActiveView('orders')}
       >
-        Orders
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Orders</span>
         {counts.pendingOrders > 0 && <span className={styles.navBadge}>{counts.pendingOrders}</span>}
+      </button>
+      <button 
+        className={`${styles.navItem} ${activeView === 'enquiries' ? styles.navItemActive : ''}`}
+        onClick={() => setActiveView('enquiries')}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        <span>Inquiries</span>
+        {counts.newEnquiries > 0 && <span className={styles.navBadge}>{counts.newEnquiries}</span>}
       </button>
       <button 
         className={`${styles.navItem} ${activeView === 'users' ? styles.navItemActive : ''}`}
         onClick={() => setActiveView('users')}
       >
-        Users
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Users</span>
       </button>
       <button 
         className={`${styles.navItem} ${activeView === 'leads' ? styles.navItemActive : ''}`}
         onClick={() => setActiveView('leads')}
       >
-        📈 Leads
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m11 17 2 2 4-4"/><path d="m22 10-6-6H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V10Z"/><path d="M16 4v6h6"/></svg>
+        <span>Leads</span>
       </button>
       <button 
         className={`${styles.navItem} ${activeView === 'deals' ? styles.navItemActive : ''}`}
         onClick={() => setActiveView('deals')}
       >
-        🔥 Deal of the Day
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m13 2-2 2.5h3L12 18l-1.5-1.5-2 3.5 6.5-6.5h-3l2.5-11.5z"/></svg>
+        <span>Deals</span>
+      </button>
+      <button 
+        className={`${styles.navItem} ${activeView === 'showcase' ? styles.navItemActive : ''}`}
+        onClick={() => setActiveView('showcase')}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>
+        <span>Showcase</span>
       </button>
       <button 
         className={`${styles.navItem} ${activeView === 'maintenance' ? styles.navItemActive : ''}`}
         onClick={() => setActiveView('maintenance')}
       >
-        ⚙️ Maintenance
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Settings</span>
       </button>
     </nav>
   </div>
@@ -376,15 +410,26 @@ const OrdersView = ({ orders, onStatusUpdate, onDelete }: any) => (
               <td className={styles.deliveryInfo}>{o.delivery?.address || 'Address Not Found'}</td>
               <td className={styles.contactInfo}>{o.delivery?.contact || 'No Contact'}</td>
               <td>
-                <select 
-                  className={styles.statusSelect}
-                  value={o.status}
-                  onChange={(e) => onStatusUpdate(o.id, e.target.value)}
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Shipped">Shipped</option>
-                  <option value="Delivered">Delivered</option>
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <select 
+                    className={styles.statusSelect}
+                    value={o.status}
+                    onChange={(e) => onStatusUpdate(o.id, e.target.value)}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                  </select>
+                  {o.status !== 'Delivered' && (
+                    <button 
+                      className={styles.markDeliveredBtn}
+                      onClick={() => onStatusUpdate(o.id, 'Delivered')}
+                      title="Quick Mark as Delivered"
+                    >
+                      ✓
+                    </button>
+                  )}
+                </div>
               </td>
               <td>{o.date}</td>
               <td>
@@ -469,6 +514,81 @@ const LeadsView = ({ users }: { users: User[] }) => (
       ))}
       {users.length === 0 && (
         <div className={styles.noResults}>No practitioner leads found.</div>
+      )}
+    </div>
+  </div>
+);
+
+const EnquiriesView = ({ enquiries, onStatusUpdate, onDelete }: { enquiries: Enquiry[], onStatusUpdate: (id: string, s: string) => void, onDelete: (id: string) => void }) => (
+  <div className={styles.view}>
+    <div className={styles.header}>
+      <h1 className={styles.title}>INQUIRY LOG</h1>
+      <p className={styles.count}>{enquiries.length} Artifact Inquiries</p>
+    </div>
+    <div className={styles.enquiryGrid}>
+      {enquiries.map(enq => (
+        <div key={enq.id} className={styles.enquiryCard}>
+          <div className={styles.enquiryHeader}>
+            <div className={styles.enquiryMeta}>
+              <h3 className={styles.enquiryName}>{enq.name}</h3>
+              <a href={`mailto:${enq.email}`} className={styles.enquiryEmail}>{enq.email}</a>
+              <span className={styles.enquiryDate}>{new Date(enq.date).toLocaleString()}</span>
+            </div>
+            <span className={styles.enquirySubject}>{enq.subject}</span>
+          </div>
+
+          <p className={styles.enquiryMessage}>{enq.message}</p>
+
+          {(enq.measurements || enq.materials) && (
+            <div className={styles.enquiryDetails}>
+              {enq.measurements && (
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>Measurements:</span>
+                  <span className={styles.detailValue}>{enq.measurements}</span>
+                </div>
+              )}
+              {enq.materials && (
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>Materials:</span>
+                  <span className={styles.detailValue}>{enq.materials}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {enq.phone && (
+            <div className={styles.detailItem}>
+              <span className={styles.detailLabel}>Contact:</span>
+              <a href={`tel:${enq.phone}`} className={styles.detailValue} style={{ color: '#BF953F', textDecoration: 'none' }}>{enq.phone}</a>
+            </div>
+          )}
+
+          <div className={styles.enquiryFooter}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <select 
+                className={styles.statusSelect}
+                value={enq.status}
+                onChange={(e) => onStatusUpdate(enq.id, e.target.value)}
+                style={{ fontSize: '0.7rem', padding: '5px' }}
+              >
+                <option value="New">New</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Responded">Responded</option>
+                <option value="Archived">Archived</option>
+              </select>
+            </div>
+            <button 
+              className={styles.deleteBtn}
+              onClick={() => onDelete(enq.id)}
+              style={{ padding: '8px' }}
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      ))}
+      {enquiries.length === 0 && (
+        <div className={styles.noResults}>No active inquiries found in the archive.</div>
       )}
     </div>
   </div>
@@ -580,8 +700,104 @@ const DealOfDayView = ({ products, dealIds, setDealIds }: { products: Product[],
   );
 };
 
+const ShowcaseView = ({ products, showcaseIds, setShowcaseIds }: { products: Product[], showcaseIds: number[], setShowcaseIds: (ids: number[]) => void }) => {
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const toggleShowcaseItem = (id: number) => {
+    if (showcaseIds.includes(id)) {
+      setShowcaseIds(showcaseIds.filter(d => d !== id));
+    } else {
+      setShowcaseIds([...showcaseIds, id]);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/showcase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: showcaseIds }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.view}>
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.title}>🎬 CINEMATIC SHOWCASE</h1>
+          <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '6px' }}>
+            Select artifacts to feature in the high-performance 3D "Auto-play" player.
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <span style={{ color: '#BF953F', fontWeight: 800, fontSize: '0.85rem' }}>
+            {showcaseIds.length} Items Selected
+          </span>
+          <button
+            className={styles.submitBtn}
+            onClick={handleSave}
+            disabled={saving}
+            style={{ minWidth: '160px' }}
+          >
+            {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Showcase'}
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.productList}>
+        {products.map((p: Product) => {
+          const isSelected = showcaseIds.includes(p.id!);
+          return (
+            <div
+              key={p.id}
+              className={styles.productItem}
+              style={{
+                border: isSelected ? '1px solid #BF953F' : '1px solid rgba(255,255,255,0.05)',
+                background: isSelected ? 'rgba(191,149,63,0.06)' : undefined,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onClick={() => toggleShowcaseItem(p.id!)}
+            >
+              <div className={styles.productInfo}>
+                <div className={styles.imageThumb}>
+                  <img src={p.image} alt={p.name} className={styles.productImage} />
+                  {isSelected && (
+                    <span className={styles.tagBadge} style={{ background: '#BF953F' }}>✓ ON STAGE</span>
+                  )}
+                </div>
+                <div className={styles.details}>
+                  <h3>{p.name}</h3>
+                  <p>{p.category} • {p.model3d ? '3D Model Available' : 'No 3D Model'}</p>
+                </div>
+              </div>
+              <div className={styles.actions}>
+                <button
+                  className={isSelected ? styles.deleteBtn : styles.stockBtn}
+                  onClick={(e) => { e.stopPropagation(); toggleShowcaseItem(p.id!); }}
+                >
+                  {isSelected ? 'Remove' : 'Add to Stage'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export default function AdminPage() {
-  const [activeView, setActiveView] = useState<'inventory' | 'orders' | 'users' | 'leads' | 'deals' | 'categories' | 'maintenance'>('inventory');
+  const [activeView, setActiveView] = useState<'inventory' | 'orders' | 'users' | 'enquiries' | 'leads' | 'deals' | 'showcase' | 'categories' | 'maintenance'>('inventory');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -590,7 +806,9 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [dealIds, setDealIds] = useState<number[]>([]);
+  const [showcaseIds, setShowcaseIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -630,6 +848,9 @@ export default function AdminPage() {
     });
     fetch('/api/deals').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setDealIds(data);
+    });
+    fetch('/api/showcase').then(r => r.json()).then(data => {
+      if (Array.isArray(data)) setShowcaseIds(data);
     });
   }, []);
 
@@ -680,6 +901,11 @@ export default function AdminPage() {
         const data = await resp.json();
         if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch users');
         setUsers(data);
+      } else if (activeView === 'enquiries') {
+        const resp = await fetch('/api/admin/enquiries');
+        const data = await resp.json();
+        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch enquiries');
+        setEnquiries(data);
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -692,7 +918,7 @@ export default function AdminPage() {
   const handleStatusUpdate = async (id: string, status: string) => {
     try {
       await fetch('/api/orders', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status })
       });
@@ -715,8 +941,9 @@ export default function AdminPage() {
   const counts = useMemo(() => {
     const lowStock = (Array.isArray(products) ? products : []).filter(p => p.variants?.some(v => v.stock <= (v.refillLevel || 0))).length;
     const pendingOrders = (Array.isArray(orders) ? orders : []).filter(o => o.status === 'Pending').length;
-    return { lowStock, pendingOrders };
-  }, [products, orders]);
+    const newEnquiries = (Array.isArray(enquiries) ? enquiries : []).filter(e => e.status === 'New').length;
+    return { lowStock, pendingOrders, newEnquiries };
+  }, [products, orders, enquiries]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -840,6 +1067,26 @@ export default function AdminPage() {
     }
   };
 
+  const handleBackfill = async () => {
+    if (!confirm('This will associate orphaned historical orders to registered practitioner accounts where names match. Proceed?')) return;
+    
+    setLoading(true);
+    try {
+      const resp = await fetch('/api/admin/backfill', { method: 'POST' });
+      if (resp.ok) {
+        const data = await resp.json();
+        alert(`Archive Cleanse Complete: ${data.updated} records successfully associated.`);
+        fetchData(); // Refresh UI data
+      } else {
+        throw new Error('Backfill process failed.');
+      }
+    } catch (e: any) {
+      alert('Archive Maintenance Failure: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className={styles.authContainer}>
@@ -881,7 +1128,7 @@ export default function AdminPage() {
       <Sidebar activeView={activeView} setActiveView={setActiveView} counts={counts} />
       
       <main className={styles.mainContent}>
-        {(counts.lowStock > 0 || counts.pendingOrders > 0) && (
+        {(counts.lowStock > 0 || counts.pendingOrders > 0 || counts.newEnquiries > 0) && (
           <div className={styles.globalAlertBar}>
             <span className={styles.alertTitle}>REQUIRED ACTION:</span>
             {counts.lowStock > 0 && (
@@ -898,6 +1145,14 @@ export default function AdminPage() {
                 onClick={() => setActiveView('orders')}
               >
                 📦 {counts.pendingOrders} pending orders require processing
+              </button>
+            )}
+            {counts.newEnquiries > 0 && (
+              <button 
+                className={styles.alertLink}
+                onClick={() => setActiveView('enquiries')}
+              >
+                📜 {counts.newEnquiries} new inquiries received
               </button>
             )}
           </div>
@@ -941,6 +1196,8 @@ export default function AdminPage() {
           <OrdersView orders={orders} onStatusUpdate={handleStatusUpdate} onDelete={handleDeleteOrder} />
         ) : activeView === 'deals' ? (
           <DealOfDayView products={products} dealIds={dealIds} setDealIds={setDealIds} />
+        ) : activeView === 'showcase' ? (
+          <ShowcaseView products={products} showcaseIds={showcaseIds} setShowcaseIds={setShowcaseIds} />
         ) : activeView === 'categories' ? (
           <CategoryView products={products} onUpdate={fetchData} />
         ) : activeView === 'maintenance' ? (
@@ -962,6 +1219,22 @@ export default function AdminPage() {
                 disabled={loading}
               >
                 {loading ? 'INITIALIZING ARCHIVE...' : 'EXECUTE SEED RESTORATION'}
+              </button>
+            </div>
+
+            <div className={styles.maintenanceCard} style={{ marginTop: '20px', border: '1px solid rgba(191, 149, 63, 0.4)' }}>
+              <div className={styles.maintenanceLabel}>DATA INTEGRITY MAINTENANCE</div>
+              <h1 className={styles.maintenanceTitle}>Archive Synchronization</h1>
+              <p className={styles.maintenanceDesc}>
+                Automatically scan legacy acquisitions (orders without linked user accounts) and associate them with registered practitioners who share the same archival name. Let no heritage be lost.
+              </p>
+              <button 
+                className={styles.seedBtn} 
+                onClick={handleBackfill}
+                disabled={loading}
+                style={{ background: '#111', color: '#BF953F', border: '1px solid #BF953F' }}
+              >
+                {loading ? 'CLEANSING ARCHIVE...' : 'CLEANSE & BACKFILL ARCHIVE'}
               </button>
             </div>
 
@@ -1034,6 +1307,27 @@ export default function AdminPage() {
           </div>
         ) : activeView === 'leads' ? (
           <LeadsView users={users} />
+        ) : activeView === 'enquiries' ? (
+          <EnquiriesView 
+            enquiries={enquiries} 
+            onStatusUpdate={async (id, status) => {
+              await fetch('/api/admin/enquiries', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status })
+              });
+              fetchData();
+            }}
+            onDelete={async (id) => {
+              if (!confirm('Permanently remove this inquiry from the archive?')) return;
+              await fetch('/api/admin/enquiries', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+              });
+              fetchData();
+            }}
+          />
         ) : (
           <UsersView users={users} />
         )}

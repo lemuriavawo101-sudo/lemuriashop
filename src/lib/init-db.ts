@@ -61,6 +61,18 @@ export async function initializeDatabase() {
       password TEXT,
       phone TEXT,
       role TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS enquiries (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT,
+      subject TEXT,
+      message TEXT,
+      measurements TEXT,
+      materials TEXT,
+      status TEXT DEFAULT 'New',
+      date TEXT
     )`
   ];
 

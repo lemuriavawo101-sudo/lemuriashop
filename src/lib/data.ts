@@ -61,6 +61,24 @@ export const getDeals = cache(async () => {
   }
 });
 
+export const getShowcaseItems = cache(async () => {
+  try {
+    const products = await getProducts();
+    const result = await db.execute('SELECT productId FROM showcase');
+    const showcaseIds = result.rows.map((r: any) => r.productId);
+    
+    if (showcaseIds.length > 0) {
+      return products.filter((p: any) => showcaseIds.includes(p.id));
+    }
+    
+    // Fallback: use all products if showcase is empty to ensure player always has content
+    return products;
+  } catch (e) {
+    console.error('getShowcaseItems DB error:', e);
+    return [];
+  }
+});
+
 export const getReviews = cache(async (productId?: number) => {
   try {
     let result;

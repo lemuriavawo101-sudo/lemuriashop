@@ -1,9 +1,26 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const result = await db.execute('SELECT * FROM orders ORDER BY date DESC');
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+
+    // TEMPORARY MIGRATION: Add userId column if not exists
+    try {
+      await db.execute('ALTER TABLE orders ADD COLUMN userId TEXT;');
+    } catch (e) {}
+
+    let result;
+    if (userId) {
+      result = await db.execute({
+        sql: 'SELECT * FROM orders WHERE userId = ? ORDER BY date DESC',
+        args: [userId]
+      });
+    } else {
+      result = await db.execute('SELECT * FROM orders ORDER BY date DESC');
+    }
+
     const orders = result.rows.map((o: any) => ({
       ...o,
       items: JSON.parse(o.items || '[]'),
@@ -20,6 +37,7 @@ export async function POST(request: Request) {
     const o = await request.json();
     const id = o.id || `ORD-${Date.now()}`;
     const date = o.date || new Date().toISOString();
+    const userId = o.userId || null;
 
     // Idempotency check
     const existing = await db.execute({
@@ -32,8 +50,8 @@ export async function POST(request: Request) {
     }
 
     await db.execute({
-      sql: 'INSERT INTO orders (id, customer, total, status, date, items, delivery) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      args: [id, o.customer, o.total, 'Pending', date, JSON.stringify(o.items), JSON.stringify(o.delivery)]
+      sql: 'INSERT INTO orders (id, customer, total, status, date, items, delivery, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      args: [id, o.customer, o.total, 'Pending', date, JSON.stringify(o.items), JSON.stringify(o.delivery), userId]
     });
 
     return NextResponse.json({ ...o, id, date, status: 'Pending' }, { status: 201 });

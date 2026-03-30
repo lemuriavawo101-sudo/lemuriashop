@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import Link from 'next/link';
 import styles from './Products.module.css';
 import FilterSidebar from './FilterSidebar';
 import ProductGridCard from './ProductGridCard';
@@ -54,6 +55,24 @@ export default async function ProductsPage({
         <div className={styles.container}>
           <nav className={styles.breadcrumb}>Heritage / Collection / All Products</nav>
           <h1 className={styles.title}>THE ARCHIVE</h1>
+          
+          <div className={styles.customBanner}>
+            <div className={styles.customContent}>
+              <div className={styles.customTag}>BESPOKE SERVICE</div>
+              <h2 className={styles.customTitle}>CRAFT YOUR OWN HERITAGE</h2>
+              <p className={styles.customText}>
+                Our master artisans can bring your unique vision to life. If you have an image, 
+                blueprint, or specific measurement requirements, we can create a one-of-a-kind 
+                artifact tailored strictly to your needs.
+              </p>
+              <Link href="/contact?subject=custom" className={styles.customBtn}>
+                <span>REQUEST CUSTOM ORDER</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
         </div>
       </header>
 

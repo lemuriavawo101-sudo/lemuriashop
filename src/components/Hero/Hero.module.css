@@ -135,11 +135,11 @@
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 0 4rem;
+  padding: 80px 4rem; /* Added vertical padding for safety */
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  height: calc(100vh - 80px);
+  min-height: calc(100vh - 90px);
   z-index: 10;
   position: relative;
 }
@@ -552,7 +552,12 @@
 }
 
 @media (max-width: 1024px) {
-  .container { flex-direction: column; padding-top: 2rem; padding-left: 2rem; padding-right: 2rem; }
+  .container { 
+    flex-direction: column; 
+    padding: 120px 2rem 60px; /* Adjusted padding for mobile stack */
+    height: auto;
+    min-height: 100vh;
+  }
   .title { font-size: 4.5rem; margin-top: 2rem; }
   .mediaArea { width: 100%; margin-top: 2rem; min-height: 400px; }
   .watermark { display: none; }

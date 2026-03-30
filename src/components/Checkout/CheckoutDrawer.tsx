@@ -58,6 +58,17 @@ const CheckoutDrawer: React.FC = () => {
     }
 
     try {
+      if (!(window as any).Razorpay) {
+        alert('The Razorpay Acquisition Engine is still initializing. Please wait a moment and try again.');
+        return;
+      }
+
+      if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+        console.error('CRITICAL: NEXT_PUBLIC_RAZORPAY_KEY_ID is missing. Check Vercel environment variables.');
+        alert('Checkout configuration error: Missing Public Key. Please contact the sanctuary curator.');
+        return;
+      }
+
       const response = await fetch('/api/razorpay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

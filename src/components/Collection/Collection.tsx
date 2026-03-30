@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import styles from './Collection.module.css';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useToast } from '@/context/ToastContext';
 import CinematicViewer from '../ModelViewer/CinematicViewer';
 import { usePerformance } from '@/context/PerformanceContext';
 
@@ -43,12 +44,34 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct
   onViewProduct: () => void;
 }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { showToast } = useToast();
   const { isLowPower, webGLSupported } = usePerformance();
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [imageError, setImageError] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const variant = product.variants[selectedVariant];
   const itemInWishlist = isInWishlist(product.id);
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const url = `${window.location.origin}/products/${product.id}`;
+    const title = `Check out ${product.name} at Lemuria Heritage`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title,
+        text: product.description,
+        url,
+      }).catch(err => {
+        console.error("Error sharing:", err);
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      showToast("Link copied to clipboard!");
+    }
+  };
   
   const show3D = webGLSupported && !isLowPower;
 
@@ -112,6 +135,21 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct
         >
           <svg viewBox="0 0 24 24" fill={itemInWishlist ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+
+        <button 
+          className={styles.shareBtn}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={handleShare}
+          title="Share Artifact"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
           </svg>
         </button>
 
@@ -352,11 +390,11 @@ const Dial = ({ products }: { products: Product[] }) => {
     startX.current = e.pageX;
     dragDistance.current = 0;
     lastTime.current = Date.now();
-    lastInteractionTime.current = Date.now(); // Reset drift timer
+    lastInteractionTime.current = Date.now();
     scrollLeft.current = dialRef.current?.scrollLeft || 0;
     scrollFloat.current = scrollLeft.current;
     velocity.current = 0;
-    targetCenter.current = null; // Cancel any centering animation on new drag
+    targetCenter.current = null;
     if (dialRef.current) dialRef.current.style.cursor = 'grabbing';
   };
 
@@ -365,10 +403,10 @@ const Dial = ({ products }: { products: Product[] }) => {
     if (dialRef.current) dialRef.current.style.cursor = 'grab';
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleDragUpdate = (clientX: number) => {
     if (!isDown.current || !dialRef.current) return;
-    const x = e.pageX;
-    const walk = (x - startX.current) * 1.5; // Slightly lower sensitivity
+    const x = clientX;
+    const walk = (x - startX.current) * 1.5;
     dragDistance.current = Math.abs(x - startX.current);
     lastTime.current = Date.now();
     
@@ -378,9 +416,32 @@ const Dial = ({ products }: { products: Product[] }) => {
     dialRef.current.scrollLeft = targetScroll;
     scrollFloat.current = targetScroll;
     
-    // Average velocity for smoother feel
     const instantVelocity = targetScroll - oldScroll;
     velocity.current = velocity.current * 0.4 + instantVelocity * 0.6;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    handleDragUpdate(e.pageX);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isDown.current = true;
+    startX.current = e.touches[0].pageX;
+    dragDistance.current = 0;
+    lastTime.current = Date.now();
+    lastInteractionTime.current = Date.now();
+    scrollLeft.current = dialRef.current?.scrollLeft || 0;
+    scrollFloat.current = scrollLeft.current;
+    velocity.current = 0;
+    targetCenter.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    handleDragUpdate(e.touches[0].pageX);
+  };
+
+  const handleTouchEnd = () => {
+    isDown.current = false;
   };
 
   const handleCardClick = (index: number) => {
@@ -411,15 +472,18 @@ const Dial = ({ products }: { products: Product[] }) => {
 
   return (
     <div className={styles.kineticDialWrapper}>
-      <div 
-        className={styles.kineticDialContainer} 
-        ref={dialRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseMove={handleMouseMove}
-      >
+        <div 
+          className={styles.kineticDialContainer} 
+          ref={dialRef}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
         <div className={styles.dialSpacer}></div>
         {products.map((product) => (
           <ProductCard 

@@ -57,7 +57,7 @@ const Footer: React.FC = () => {
             <Link href="#">Privacy Policy</Link>
             <Link href="#">Returns & Refunds</Link>
             <Link href="#">Terms & Policy</Link>
-            <Link href="#">Contact</Link>
+            <Link href="/contact">Contact</Link>
           </div>
         </div>
 
@@ -68,7 +68,7 @@ const Footer: React.FC = () => {
             <Link href="/">HOME</Link>
             <Link href="/products">PRODUCTS</Link>
             <Link href="/#collection">CATEGORIES</Link>
-            <a href="#">CONTACT</a>
+            <Link href="/contact">CONTACT</Link>
             {user?.role === 'admin' && (
               <Link href="/admin">ADMIN</Link>
             )}

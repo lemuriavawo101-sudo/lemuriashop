@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 
+export const runtime = 'nodejs';
+
+const key_id = process.env.RAZORPAY_KEY_ID;
+const key_secret = process.env.RAZORPAY_KEY_SECRET;
+
+if (!key_id || !key_secret) {
+  console.error('CRITICAL: Razorpay environment variables (KEY_ID or KEY_SECRET) are missing. Acquisition Sanctuary is offline.');
+}
+
 const instance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+  key_id: key_id || '',
+  key_secret: key_secret || '',
 });
 
 export async function POST(request: Request) {

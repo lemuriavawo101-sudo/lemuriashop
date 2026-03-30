@@ -16,10 +16,23 @@ const HeroModel = dynamic(() => import('./HeroModel'), {
   )
 });
 
-const Hero: React.FC = () => {
+import { useShowcaseStore, Product } from '@/store/useShowcaseStore';
+
+interface HeroProps {
+  products?: Product[];
+}
+
+const Hero: React.FC<HeroProps> = ({ products = [] }) => {
   const [modelLoaded, setModelLoaded] = useState(true);
   const { isLowPower, webGLSupported } = usePerformance();
+  const openShowcase = useShowcaseStore((state) => state.open);
   const show3D = webGLSupported && !isLowPower;
+
+  const handlePlayShowcase = () => {
+    if (products && products.length > 0) {
+      openShowcase(products);
+    }
+  };
 
   return (
     <section className={styles.hero}>
@@ -82,7 +95,11 @@ const Hero: React.FC = () => {
 
           {/* Action Buttons */}
           <div className={`${styles.actionGroup} ${styles.animateFadeInDelayedMore}`}>
-            <button className="btnPremium btnPremiumGold" aria-label="Play Cinematic Weapon Showcase">
+            <button 
+              className="btnPremium btnPremiumGold" 
+              aria-label="Play Cinematic Weapon Showcase"
+              onClick={handlePlayShowcase}
+            >
               <span className={styles.btnIcon}>▶</span> Play Showcase
             </button>
             <button className="btnPremium btnPremiumGlass" aria-label="View Detailed Craftsmanship Information">

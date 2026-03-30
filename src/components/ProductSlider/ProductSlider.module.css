@@ -266,10 +266,16 @@
 }
 
 .image {
-  object-fit: contain;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
   padding: 10px;
   filter: drop-shadow(0 15px 40px rgba(0, 0, 0, 0.9)) brightness(1.15) contrast(1.1);
   transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
+  z-index: 20;
 }
 
 .spotlightFrame:hover .image {
@@ -305,7 +311,7 @@
 
 .view3dBtn, .wishlistBtn {
   position: absolute;
-  bottom: 30px;
+  bottom: 45px;
   background: rgba(10, 10, 10, 0.85);
   color: #BF953F;
   border: 1px solid rgba(191, 149, 63, 0.4);
@@ -321,11 +327,11 @@
 }
 
 .view3dBtn {
-  right: 30px;
+  right: 65px;
 }
 
 .wishlistBtn {
-  right: 140px; /* Offset from 3D View */
+  right: 175px; /* Offset from 3D View */
   padding: 12px;
   width: 44px;
   height: 44px;
@@ -345,11 +351,36 @@
   border-color: #BF953F;
 }
 
-.view3dBtn:hover, .wishlistBtn:hover {
+.view3dBtn:hover, .wishlistBtn:hover, .shareBtn:hover {
   background: #BF953F;
   color: #000;
   transform: translateY(-3px) scale(1.05);
   box-shadow: 0 15px 35px rgba(191, 149, 63, 0.3);
+}
+
+.shareBtn {
+  position: absolute;
+  bottom: 45px;
+  right: 120px; /* Between 3D View and Wishlist */
+  background: rgba(10, 10, 10, 0.85);
+  color: #BF953F;
+  border: 1px solid rgba(191, 149, 63, 0.4);
+  padding: 12px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 15;
+  transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  backdrop-filter: blur(10px);
+}
+
+.shareBtn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .infoSide {
@@ -530,19 +561,63 @@
   box-shadow: 0 10px 20px rgba(191, 149, 63, 0.2);
 }
 
+.unrated {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #444;
+  letter-spacing: 0.15em;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.addToCartBtn {
+  min-width: 280px;
+}
+
 @media (max-width: 1200px) {
-  .spotlightContent { flex-direction: column; gap: 40px; }
+  .container { padding: 0 4rem; }
+  .spotlightContent { flex-direction: column; gap: 40px; align-items: stretch; }
+  .mediaSide, .infoSide { width: 100%; }
   .imageWrapper { height: 350px; }
-  .productName { font-size: 2.8rem; }
+  .productName { font-size: 2.5rem; }
   .priceValue { font-size: 2.2rem; }
 }
 
 @media (max-width: 768px) {
   .container { padding: 0 2rem; }
+  .spotlightContent { gap: 30px; }
+  .mediaSide, .infoSide { width: 100%; }
+  .header { flex-direction: column; align-items: flex-start; gap: 30px; margin-bottom: 40px; }
+  .controlArea { align-items: flex-start; width: 100%; }
+  .timerWrapper { width: 100%; }
   .spotlightFrame { padding: 30px; border-radius: 20px; }
-  .sectionTitle { font-size: 2.2rem; }
-  .pricing { flex-direction: column; gap: 20px; }
+  .sectionTitle { font-size: 2rem; }
+  .pricing { flex-direction: column; gap: 20px; padding: 15px; }
+  .priceValue { font-size: 2rem; }
   .decorationTL, .decorationTR, .decorationBL, .decorationBR { display: none; }
+  .actionArea { flex-direction: column; gap: 20px; align-items: center; text-align: center; }
+  .addToCartBtn { width: 100%; min-width: 0; }
+  .wishlistBtn { left: 20px; right: auto; } /* Fixed selector typo: was itemInWishlist */
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0 1.5rem; }
+  .spotlightFrame { padding: 20px 15px; }
+  .sectionTitle { font-size: 1.6rem; }
+  .productName { font-size: 1.8rem; }
+  .imageWrapper { height: 280px; }
+  .description { font-size: 0.85rem; }
+  .offerBadge { top: 15px; right: 15px; padding: 10px 15px; }
+  .offerAmount { font-size: 1.1rem; }
+  
+  .wishlistBtn { right: auto; left: 15px; bottom: 15px; }
+  .shareBtn { right: auto; left: 65px; bottom: 15px; }
+  .view3dBtn { right: 15px; bottom: 15px; padding: 8px 16px; font-size: 0.6rem; }
+  
+  .priceValue { font-size: 1.8rem; }
+  .technicalNote { font-size: 0.55rem; letter-spacing: 0.2em; }
 }
 
 /* Ratings */
@@ -576,6 +651,32 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   background: rgba(255, 255, 255, 0.02);
   border-radius: 4px;
+}
+
+.fallbackContainer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.fallbackImage {
+  width: 140px;
+  height: 140px;
+  background: rgba(191, 149, 63, 0.05);
+  border: 1px solid rgba(191, 149, 63, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-family: var(--font-serif);
+  color: rgba(191, 149, 63, 0.4);
+  text-transform: uppercase;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(191, 149, 63, 0.05);
+  backdrop-filter: blur(10px);
 }
 
 /* Cinema Focus Mode Enhancements */
