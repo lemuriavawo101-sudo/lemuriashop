@@ -5,7 +5,21 @@ export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await request.json();
+    let data;
+    const contentType = request.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const formData = await request.formData();
+      data = {
+        razorpay_order_id: formData.get('razorpay_order_id'),
+        razorpay_payment_id: formData.get('razorpay_payment_id'),
+        razorpay_signature: formData.get('razorpay_signature')
+      };
+    } else {
+      data = await request.json();
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = data;
     
     // Create Hmac
     const secret = process.env.RAZORPAY_KEY_SECRET;
@@ -22,19 +36,23 @@ export async function POST(request: Request) {
       .update(body.toString())
       .digest('hex');
 
-    console.log('--- Razorpay Production Handshake ---');
+    console.log('--- Razorpay Global Handshake [Absolute Forge] ---');
+    console.log('Format Received:', contentType.includes('form') ? 'Form' : 'JSON');
     console.log('Order ID:', razorpay_order_id);
-    console.log('Payment ID:', razorpay_payment_id);
-    console.log('Received Signature:', razorpay_signature);
-    console.log('Secret Configured:', !!secret);
-    console.log('Expected Signature:', expectedSignature);
-    console.log('------------------------------------');
+    console.log('Verification SUCCESS:', expectedSignature === razorpay_signature);
+    console.log('------------------------------------------------');
 
     if (expectedSignature === razorpay_signature) {
-      console.log('Verification SUCCESS');
+      // If it's a form post (redirect from Razorpay), we must redirect to success page
+      if (contentType.includes('application/x-www-form-urlencoded')) {
+        const successURL = new URL('/checkout/success', request.url);
+        successURL.searchParams.set('razorpay_payment_id', razorpay_payment_id as string);
+        successURL.searchParams.set('razorpay_order_id', razorpay_order_id as string);
+        successURL.searchParams.set('razorpay_signature', razorpay_signature as string);
+        return NextResponse.redirect(successURL);
+      }
       return NextResponse.json({ status: 'verified' });
     } else {
-      console.warn('Verification FAILED: Signature mismatch');
       return NextResponse.json({ status: 'unverified' }, { status: 400 });
     }
   } catch (error) {

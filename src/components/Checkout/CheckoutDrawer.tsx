@@ -127,24 +127,18 @@ const CheckoutDrawer: React.FC = () => {
         description: 'Artifact Acquisition',
         image: `https://${window.location.host}/favicon.svg`, 
         order_id: order.id,
-        // GUARDIAN HANDSHAKE: Dual Path
-        // 1. callback_url: Server-side backup for mobile/UPI redirects
-        callback_url: successUrl.toString(),
-       // Decoder path is managed globally in GlobalCanvas.tsx
+        // THE ABSOLUTE FORGE: Forced Redirect Handshake
+        // This is the most robust method. Razorpay will POST data back to our server,
+        // which will then verify and redirect the user back to the success page.
+        callback_url: `${window.location.origin}/api/razorpay/verify`,
+        redirect: true, 
         
-        // 2. handler: Frontend high-speed path for desktop
+        // 2. handler: Frontend high-speed path (Disabled when redirect: true)
+        /* 
         handler: function (response: any) {
-          console.log('[Razorpay Handler] Authorization Received:', response.razorpay_payment_id);
-          alert('[Acquisition Engine] Handshake Initiated. Redirecting...');
-          setSuccessResponse(response);
-          
-          const handlerUrl = new URL('/checkout/success', window.location.origin);
-          handlerUrl.searchParams.set('razorpay_payment_id', response.razorpay_payment_id);
-          handlerUrl.searchParams.set('razorpay_order_id', response.razorpay_order_id);
-          handlerUrl.searchParams.set('razorpay_signature', response.razorpay_signature);
-          
-          router.push(handlerUrl.pathname + handlerUrl.search);
+          ...
         },
+        */
         prefill: {
           name: user?.name,
           email: user?.email,
