@@ -19,11 +19,19 @@ export async function POST(request: Request) {
   try {
     const { amount, notes } = await request.json();
     
+    // DEEP SCRUB: Final Server-Side check for localhost leaks
+    const sanitizedNotes = JSON.parse(JSON.stringify(notes || {}));
+    Object.keys(sanitizedNotes).forEach(key => {
+      if (typeof sanitizedNotes[key] === 'string') {
+        sanitizedNotes[key] = sanitizedNotes[key].replace(/http:\/\/localhost:\d+/g, '');
+      }
+    });
+
     const options = {
       amount: Math.round(amount * 100), // in paise
       currency: 'INR',
       receipt: `receipt_${Date.now()}`,
-      notes: notes || {}
+      notes: sanitizedNotes
     };
 
     const order = await instance.orders.create(options);
