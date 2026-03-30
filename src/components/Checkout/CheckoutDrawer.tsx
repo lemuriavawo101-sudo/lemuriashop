@@ -145,10 +145,8 @@ const CheckoutDrawer: React.FC = () => {
         description: 'Artifact Acquisition',
         image: `https://${window.location.host}/favicon.svg`, 
         order_id: order.id,
-        // THE ABSOLUTE FORGE: Forced Redirect Handshake
-        // This is the most robust method. Razorpay will POST data back to our server,
-        // which will then verify and redirect the user back to the success page.
-        callback_url: `${window.location.origin}/api/razorpay/verify`,
+        // THE ABSOLUTE FORGE: Hardcoded Global Handshake Bridge
+        callback_url: `https://lemuriashop.vercel.app/api/razorpay/verify`,
         redirect: true, 
         
         // 2. handler: Frontend high-speed path (Disabled when redirect: true)

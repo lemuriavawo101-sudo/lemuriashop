@@ -45,7 +45,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const savedCart = localStorage.getItem('lemuria_cart');
     if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+      const items = JSON.parse(savedCart);
+      // PERMANENT PURIFICATION: Banish localhost traces on load
+      const purifiedItems = items.map((i: any) => ({
+        ...i,
+        image: i.image.includes('localhost') ? i.image.replace(/http:\/\/localhost:\d+/, '') : i.image
+      }));
+      setCartItems(purifiedItems);
     }
   }, []);
 
@@ -74,7 +80,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         size: variant.size, 
         price: variant.price, 
         image: product.image, 
-        quantity: 1 
+        quantity: 1,
+        // THE ABSOLUTE FORGE: Final Handshake Bridge
+        callback_url: `https://lemuriashop.vercel.app/api/razorpay/verify`,
+        redirect: true, 
       }];
     });
     
