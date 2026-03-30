@@ -42,7 +42,7 @@
 }
 
 .categorySection {
-  margin-bottom: 150px;
+  margin-bottom: 80px;
 }
 
 .categoryHeader {
@@ -93,7 +93,8 @@
   gap: 40px;
   overflow-x: auto; /* Restored 'auto' to support trackpads/wheels */
   -webkit-overflow-scrolling: touch; /* Kinetic feel on iOS */
-  padding: 100px 0;
+  padding: 60px 0;
+  min-height: 700px;
   scrollbar-width: none;
   -ms-overflow-style: none;
   cursor: grab;

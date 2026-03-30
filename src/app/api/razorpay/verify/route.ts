@@ -22,12 +22,13 @@ export async function POST(request: Request) {
       .update(body.toString())
       .digest('hex');
 
-    console.log('--- Razorpay Verification ---');
+    console.log('--- Razorpay Production Handshake ---');
     console.log('Order ID:', razorpay_order_id);
     console.log('Payment ID:', razorpay_payment_id);
     console.log('Received Signature:', razorpay_signature);
+    console.log('Secret Configured:', !!secret);
     console.log('Expected Signature:', expectedSignature);
-    console.log('-----------------------------');
+    console.log('------------------------------------');
 
     if (expectedSignature === razorpay_signature) {
       console.log('Verification SUCCESS');

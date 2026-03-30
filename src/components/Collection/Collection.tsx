@@ -259,7 +259,7 @@ const Dial = ({ products }: { products: Product[] }) => {
   const lastInteractionTime = useRef(Date.now());
   const targetCenter = useRef<number | null>(null); 
   const containerWidthRef = useRef(0);
-  const cardsCache = useRef<{el: HTMLElement, offsetLeft: number, width: number}[]>([]);
+  const cardsCache = useRef<{el: HTMLElement, offsetLeft: number, width: number, idx: number}[]>([]);
   
   // Virtualization State
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 12 });
@@ -288,13 +288,19 @@ const Dial = ({ products }: { products: Product[] }) => {
 
     // 2. Cache cards and handle windowing logic
     const updateCache = () => {
+      if (!container) return;
       containerWidthRef.current = container.clientWidth;
       const cards = container.querySelectorAll('[data-kinetic-card]');
-      cardsCache.current = Array.from(cards).map(card => ({
-        el: card as HTMLElement,
-        offsetLeft: (card as HTMLElement).offsetLeft,
-        width: (card as HTMLElement).offsetWidth
-      }));
+      cardsCache.current = Array.from(cards).map(card => {
+        const el = card as HTMLElement;
+        const indexStr = el.getAttribute('data-index') || '0';
+        return {
+          el,
+          offsetLeft: parseInt(indexStr) * STEP,
+          width: CARD_WIDTH,
+          idx: parseInt(indexStr)
+        };
+      });
       scrollFloat.current = container.scrollLeft;
     };
     updateCache();
@@ -367,21 +373,21 @@ const Dial = ({ products }: { products: Product[] }) => {
         setTimeout(updateCache, 16);
       }
 
-      // 5. Optimized 3D Distortion using CACHED dimensions
-      const centerX = currentScroll + viewWidth / 2;
+      // 5. Optimized 3D Distortion using STABLE absolute positioning
+      const centerX = currentScroll + (viewWidth / 2);
 
       cardsCache.current.forEach((card: any) => {
         const cardCenter = card.offsetLeft + card.width / 2;
         const distFromCenter = cardCenter - centerX;
-        const maxDist = viewWidth / 2;
+        const maxDist = viewWidth * 0.8; // Wider falloff prevents "striping"
         
-        const normalized = Math.max(-1, Math.min(1, distFromCenter / maxDist));
+        const normalized = Math.max(-1.5, Math.min(1.5, distFromCenter / maxDist));
         const absDist = Math.abs(normalized);
         
-        const scale = 1 - absDist * 0.15;
-        const rotateY = normalized * -20;
-        const translateZ = absDist * -150;
-        const opacity = 1 - absDist * 0.6;
+        const scale = 1 - Math.min(0.2, absDist * 0.12);
+        const rotateY = normalized * -15;
+        const translateZ = absDist * -100;
+        const opacity = Math.max(0.1, 1 - absDist * 0.7);
         
         card.el.style.transform = `
           perspective(1000px)
@@ -517,10 +523,12 @@ const Dial = ({ products }: { products: Product[] }) => {
           {products.slice(visibleRange.start, visibleRange.end).map((product) => (
             <div 
               key={product.id}
+              data-index={products.indexOf(product)}
               style={{
                 position: 'absolute',
                 left: products.indexOf(product) * STEP,
-                top: 0
+                top: 0,
+                width: CARD_WIDTH
               }}
             >
               <ProductCard 
@@ -539,8 +547,10 @@ const Dial = ({ products }: { products: Product[] }) => {
               style={{
                 position: 'absolute',
                 left: products.length * STEP,
-                top: 0
+                top: 0,
+                width: CARD_WIDTH
               }}
+              data-index={products.length}
               data-kinetic-card
               className={styles.viewAllCard}
               onClick={() => router.push(`/products?category=${products[0].category}`)}

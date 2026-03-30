@@ -120,12 +120,14 @@ const CheckoutDrawer: React.FC = () => {
         // REMOVED: callback_url & redirect: true (Unstable on Vercel)
         // REPLACED WITH: Frontend handler for immediate client-side redirection
         handler: function (response: any) {
+          console.log('[Razorpay Handler] Authorization Received:', response.razorpay_payment_id);
           const successUrl = new URL('/checkout/success', window.location.origin);
           successUrl.searchParams.set('razorpay_payment_id', response.razorpay_payment_id);
           successUrl.searchParams.set('razorpay_order_id', response.razorpay_order_id);
           successUrl.searchParams.set('razorpay_signature', response.razorpay_signature);
           
-          window.location.href = successUrl.toString();
+          console.log('[Razorpay Handler] Redirecting to:', successUrl.toString());
+          window.location.assign(successUrl.toString());
         },
         prefill: {
           name: user?.name,
