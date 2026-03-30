@@ -338,32 +338,104 @@
 
 .checkoutBtn {
   width: 100%;
-  padding: 28px;
-  background: #BF953F;
+  padding: 22px;
+  background: linear-gradient(135deg, #BF953F, #7E5F2A);
   color: #000;
   border: none;
-  font-family: var(--font-outfit);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
   font-weight: 900;
-  font-size: 1.1rem;
-  letter-spacing: 0.4em;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-  text-transform: uppercase;
-  border-radius: 2px;
+  letter-spacing: 0.15em;
+  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(191, 149, 63, 0.2);
+}
+
+.checkoutBtn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: skewX(-25deg);
+  transition: 0.75s;
+}
+
+.checkoutBtn:hover:not(:disabled)::after {
+  left: 150%;
 }
 
 .checkoutBtn:hover:not(:disabled) {
-  background: #fff;
-  letter-spacing: 0.5em;
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(191, 149, 63, 0.3);
+  box-shadow: 0 15px 40px rgba(191, 149, 63, 0.35);
+  filter: brightness(1.1);
 }
 
 .checkoutBtn:disabled {
-  background: #111;
-  color: #555; /* Higher contrast for instructions */
+  background: #252525;
+  color: #555;
   cursor: not-allowed;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+}
+
+/* Safety Net Styles */
+.safetyNet {
+  background: rgba(18, 18, 18, 0.8);
+  border: 1px solid rgba(191, 149, 63, 0.3);
+  border-radius: 8px;
+  padding: 25px;
+  text-align: center;
+  margin-top: 15px;
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.safetyNetIcon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 10px rgba(191, 149, 63, 0.5));
+}
+
+.safetyNetText {
+  font-family: 'Outfit', sans-serif;
+  color: #BF953F;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  margin-bottom: 20px;
+}
+
+.confirmBtn {
+  background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3) !important;
+}
+
+.safetyNetHint {
+  margin-top: 15px;
+  font-size: 0.65rem;
+  color: #888;
+  letter-spacing: 0.05em;
+  font-style: italic;
 }
 
 .securitySeal {

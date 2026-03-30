@@ -16,7 +16,11 @@ declare global {
 const CheckoutDrawer: React.FC = () => {
   const { cartItems, cartCount, isCartOpen, setIsCartOpen, removeFromCart, clearCart } = useCart();
   const { user } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
+  
+  const [paymentInProgress, setPaymentInProgress] = React.useState(false);
+  const [successResponse, setSuccessResponse] = React.useState<any>(null);
 
   const isAdmin = pathname?.startsWith('/admin');
 
@@ -87,7 +91,9 @@ const CheckoutDrawer: React.FC = () => {
           }
         })
       });
+      setPaymentInProgress(true);
       const order = await response.json();
+      setPaymentInProgress(false);
 
       if (!order.id) {
         alert('Artifact acquisition failed: No order ID returned.');
@@ -121,13 +127,15 @@ const CheckoutDrawer: React.FC = () => {
         // REPLACED WITH: Frontend handler for immediate client-side redirection
         handler: function (response: any) {
           console.log('[Razorpay Handler] Authorization Received:', response.razorpay_payment_id);
+          setSuccessResponse(response);
+          
           const successUrl = new URL('/checkout/success', window.location.origin);
           successUrl.searchParams.set('razorpay_payment_id', response.razorpay_payment_id);
           successUrl.searchParams.set('razorpay_order_id', response.razorpay_order_id);
           successUrl.searchParams.set('razorpay_signature', response.razorpay_signature);
           
-          console.log('[Razorpay Handler] Redirecting to:', successUrl.toString());
-          window.location.assign(successUrl.toString());
+          console.log('[Razorpay Handler] Navigating to:', successUrl.pathname + successUrl.search);
+          router.push(successUrl.pathname + successUrl.search);
         },
         prefill: {
           name: user?.name,
@@ -276,13 +284,34 @@ const CheckoutDrawer: React.FC = () => {
                   <span className={styles.totalValue}>₹{total.toLocaleString()}</span>
                 </div>
 
-                <button 
-                  className={styles.checkoutBtn} 
-                  onClick={handlePayment}
-                  disabled={!isFormValid}
-                >
-                  {isFormValid ? 'SECURE ACQUISITION' : 'PROVIDE COORDINATES TO ACQUIRE'}
-                </button>
+                {successResponse ? (
+                  <div className={styles.safetyNet}>
+                    <div className={styles.safetyNetIcon}>✅</div>
+                    <p className={styles.safetyNetText}>AUTHORIZATION SECURED</p>
+                    <button 
+                      className={`${styles.checkoutBtn} ${styles.confirmBtn}`}
+                      onClick={() => {
+                        const successUrl = new URL('/checkout/success', window.location.origin);
+                        successUrl.searchParams.set('razorpay_payment_id', successResponse.razorpay_payment_id);
+                        successUrl.searchParams.set('razorpay_order_id', successResponse.razorpay_order_id);
+                        successUrl.searchParams.set('razorpay_signature', successResponse.razorpay_signature);
+                        router.push(successUrl.pathname + successUrl.search);
+                      }}
+                    >
+                      CONFIRM ACQUISITION <span className={styles.arrow}>→</span>
+                    </button>
+                    <p className={styles.safetyNetHint}>Click above if you are not redirected automatically.</p>
+                  </div>
+                ) : (
+                  <button 
+                    className={styles.checkoutBtn} 
+                    onClick={handlePayment}
+                    disabled={!isFormValid || paymentInProgress}
+                  >
+                    {paymentInProgress ? 'INITIALIZING ENGINE...' : 
+                     isFormValid ? 'SECURE ACQUISITION' : 'PROVIDE COORDINATES TO ACQUIRE'}
+                  </button>
+                )}
                 <div className={styles.securitySeal}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.lockIcon}>
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
