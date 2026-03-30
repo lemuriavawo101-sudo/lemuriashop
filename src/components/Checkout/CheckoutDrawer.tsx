@@ -115,6 +115,8 @@ const CheckoutDrawer: React.FC = () => {
       };
       sessionStorage.setItem('pending_acquisition', JSON.stringify(pendingData));
 
+      const successUrl = new URL('/checkout/success', window.location.origin);
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: order.amount,
@@ -123,19 +125,23 @@ const CheckoutDrawer: React.FC = () => {
         description: 'Artifact Acquisition',
         image: '/favicon.svg', 
         order_id: order.id,
-        // REMOVED: callback_url & redirect: true (Unstable on Vercel)
-        // REPLACED WITH: Frontend handler for immediate client-side redirection
+        // GUARDIAN HANDSHAKE: Dual Path
+        // 1. callback_url: Server-side backup for mobile/UPI redirects
+        callback_url: successUrl.toString(),
+        redirect: false, // Prevents forced page reloads on desktop, keeps handler active
+        
+        // 2. handler: Frontend high-speed path for desktop
         handler: function (response: any) {
           console.log('[Razorpay Handler] Authorization Received:', response.razorpay_payment_id);
+          alert('[Acquisition Engine] Handshake Initiated. Redirecting...');
           setSuccessResponse(response);
           
-          const successUrl = new URL('/checkout/success', window.location.origin);
-          successUrl.searchParams.set('razorpay_payment_id', response.razorpay_payment_id);
-          successUrl.searchParams.set('razorpay_order_id', response.razorpay_order_id);
-          successUrl.searchParams.set('razorpay_signature', response.razorpay_signature);
+          const handlerUrl = new URL('/checkout/success', window.location.origin);
+          handlerUrl.searchParams.set('razorpay_payment_id', response.razorpay_payment_id);
+          handlerUrl.searchParams.set('razorpay_order_id', response.razorpay_order_id);
+          handlerUrl.searchParams.set('razorpay_signature', response.razorpay_signature);
           
-          console.log('[Razorpay Handler] Navigating to:', successUrl.pathname + successUrl.search);
-          router.push(successUrl.pathname + successUrl.search);
+          router.push(handlerUrl.pathname + handlerUrl.search);
         },
         prefill: {
           name: user?.name,
@@ -284,23 +290,37 @@ const CheckoutDrawer: React.FC = () => {
                   <span className={styles.totalValue}>₹{total.toLocaleString()}</span>
                 </div>
 
-                {successResponse ? (
+                {(paymentInProgress || successResponse) ? (
                   <div className={styles.safetyNet}>
-                    <div className={styles.safetyNetIcon}>✅</div>
-                    <p className={styles.safetyNetText}>AUTHORIZATION SECURED</p>
-                    <button 
-                      className={`${styles.checkoutBtn} ${styles.confirmBtn}`}
-                      onClick={() => {
-                        const successUrl = new URL('/checkout/success', window.location.origin);
-                        successUrl.searchParams.set('razorpay_payment_id', successResponse.razorpay_payment_id);
-                        successUrl.searchParams.set('razorpay_order_id', successResponse.razorpay_order_id);
-                        successUrl.searchParams.set('razorpay_signature', successResponse.razorpay_signature);
-                        router.push(successUrl.pathname + successUrl.search);
-                      }}
-                    >
-                      CONFIRM ACQUISITION <span className={styles.arrow}>→</span>
-                    </button>
-                    <p className={styles.safetyNetHint}>Click above if you are not redirected automatically.</p>
+                    <div className={styles.safetyNetIcon}>
+                      {successResponse ? '✅' : '⏳'}
+                    </div>
+                    <p className={styles.safetyNetText}>
+                      {successResponse ? 'AUTHORIZATION SECURED' : 'WAITING FOR ENGINE...'}
+                    </p>
+                    
+                    {successResponse ? (
+                      <button 
+                        className={`${styles.checkoutBtn} ${styles.confirmBtn}`}
+                        onClick={() => {
+                          const successUrl = new URL('/checkout/success', window.location.origin);
+                          successUrl.searchParams.set('razorpay_payment_id', successResponse.razorpay_payment_id);
+                          successUrl.searchParams.set('razorpay_order_id', successResponse.razorpay_order_id);
+                          successUrl.searchParams.set('razorpay_signature', successResponse.razorpay_signature);
+                          router.push(successUrl.pathname + successUrl.search);
+                        }}
+                      >
+                        CONFIRM ACQUISITION <span className={styles.arrow}>→</span>
+                      </button>
+                    ) : (
+                      <div className={styles.pulsingHint}>
+                        Please complete the transaction in the popup window.
+                      </div>
+                    )}
+                    
+                    <p className={styles.safetyNetHint}>
+                      If you have already paid but are not redirected, please do not close this window.
+                    </p>
                   </div>
                 ) : (
                   <button 

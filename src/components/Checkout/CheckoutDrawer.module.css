@@ -438,6 +438,22 @@
   font-style: italic;
 }
 
+.pulsingHint {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  color: #BF953F;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite ease-in-out;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
 .securitySeal {
   display: flex;
   align-items: center;
