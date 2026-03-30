@@ -93,7 +93,7 @@ const CheckoutDrawer: React.FC = () => {
       });
       setPaymentInProgress(true);
       const order = await response.json();
-      setPaymentInProgress(false);
+      // REMOVED: setPaymentInProgress(false) - Keep it true until handler or dismissal
 
       if (!order.id) {
         alert('Artifact acquisition failed: No order ID returned.');
@@ -153,7 +153,8 @@ const CheckoutDrawer: React.FC = () => {
         },
         modal: {
           ondismiss: function() {
-            // Optional: Handle modal close if needed
+            setPaymentInProgress(false);
+            console.log('[Acquisition Engine] Handshake Cancelled by Practitioner.');
           }
         }
       };
@@ -164,6 +165,7 @@ const CheckoutDrawer: React.FC = () => {
       });
       rzp.open();
     } catch (error: any) {
+      setPaymentInProgress(false);
       alert('Secure connection failed: ' + (error.message || 'The checkout sanctuary is temporarily unreachable.'));
     }
   };
