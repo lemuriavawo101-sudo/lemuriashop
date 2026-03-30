@@ -511,3 +511,71 @@
   background: rgba(255, 255, 255, 0.02);
   border-radius: 3px;
 }
+
+.virtualTrack {
+  display: flex;
+  position: relative;
+  height: 580px;
+}
+
+.viewAllCard {
+  flex: 0 0 400px;
+  height: 580px;
+  background: rgba(181, 151, 86, 0.05);
+  border: 2px dashed rgba(181, 151, 86, 0.3);
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  backdrop-filter: blur(20px);
+}
+
+.viewAllCard:hover {
+  background: rgba(181, 151, 86, 0.1);
+  border-color: #BF953F;
+  transform: scale(1.02) translateY(-10px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+}
+
+.viewAllContent {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.viewAllIcon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+.viewAllText {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #BF953F;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.viewAllSub {
+  font-size: 0.8rem;
+  color: #888;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.viewAllArrow {
+  margin-top: 30px;
+  font-size: 2rem;
+  color: #BF953F;
+  transition: transform 0.3s ease;
+}
+
+.viewAllCard:hover .viewAllArrow {
+  transform: translateX(15px);
+}

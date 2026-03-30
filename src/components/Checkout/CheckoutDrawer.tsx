@@ -94,6 +94,21 @@ const CheckoutDrawer: React.FC = () => {
         return;
       }
 
+      // 3. Preserve Acquisition Metadata in Sanctuary Cache (Session Storage)
+      // This ensures the data is available for verification after the handshake
+      const pendingData = {
+        items: JSON.stringify(cartItems.map(i => ({ 
+          productId: i.id, 
+          variantSize: i.size, 
+          quantity: i.quantity, 
+          name: i.name 
+        }))),
+        total: total,
+        customer: user?.name || 'Anonymous Practitioner',
+        delivery: JSON.stringify(delivery)
+      };
+      sessionStorage.setItem('pending_acquisition', JSON.stringify(pendingData));
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: order.amount,
@@ -102,8 +117,16 @@ const CheckoutDrawer: React.FC = () => {
         description: 'Artifact Acquisition',
         image: '/favicon.svg', 
         order_id: order.id,
-        callback_url: `${window.location.origin}/api/razorpay/callback`,
-        redirect: true,
+        // REMOVED: callback_url & redirect: true (Unstable on Vercel)
+        // REPLACED WITH: Frontend handler for immediate client-side redirection
+        handler: function (response: any) {
+          const successUrl = new URL('/checkout/success', window.location.origin);
+          successUrl.searchParams.set('razorpay_payment_id', response.razorpay_payment_id);
+          successUrl.searchParams.set('razorpay_order_id', response.razorpay_order_id);
+          successUrl.searchParams.set('razorpay_signature', response.razorpay_signature);
+          
+          window.location.href = successUrl.toString();
+        },
         prefill: {
           name: user?.name,
           email: user?.email,
@@ -111,6 +134,11 @@ const CheckoutDrawer: React.FC = () => {
         },
         theme: {
           color: '#BF953F'
+        },
+        modal: {
+          ondismiss: function() {
+            // Optional: Handle modal close if needed
+          }
         }
       };
 

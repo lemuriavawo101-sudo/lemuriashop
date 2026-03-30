@@ -27,6 +27,7 @@ export const getProducts = cache(async () => {
       return {
         ...p,
         isWeapon: Boolean(p.isWeapon),
+        showInCollection: Boolean(p.showInCollection ?? true),
         variants: pVariants,
         avgRating,
         reviewCount: pReviews.length

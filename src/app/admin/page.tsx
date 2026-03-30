@@ -30,6 +30,7 @@ interface Product {
   modelRotationZ?: number;
   artifactType: string;
   stock: 'In Stock' | 'Out of Stock';
+  showInCollection?: boolean;
 }
 
 interface Order {
@@ -352,11 +353,36 @@ const InventoryView = ({ products, onAdd, onEdit, onDelete, onStockUpdate }: any
                   <span className={`${styles.statusBadge} ${p.stock === 'In Stock' ? styles.statusDelivered : styles.statusShipped}`} style={{ marginLeft: '10px' }}>
                     {p.stock === 'In Stock' ? 'IN STOCK' : 'OUT OF STOCK'}
                   </span>
+                  <span 
+                    className={styles.statusBadge} 
+                    style={{ 
+                      marginLeft: '10px', 
+                      background: p.showInCollection ? 'rgba(191, 149, 63, 0.15)' : 'rgba(255,255,255,0.05)',
+                      color: p.showInCollection ? '#BF953F' : '#666',
+                      border: p.showInCollection ? '1px solid #BF953F' : '1px solid #444'
+                    }}
+                  >
+                    {p.showInCollection ? '🌟 IN COLLECTION' : '📁 HIDDEN'}
+                  </span>
                 </div>
               </div>
             </div>
             <div className={styles.actions}>
-              <button className={styles.stockBtn} onClick={() => onStockUpdate(p)}>Stock</button>
+              <button 
+                className={styles.stockBtn} 
+                style={p.showInCollection ? { borderColor: '#BF953F', color: '#BF953F' } : {}}
+                onClick={async () => {
+                  const updated = { ...p, showInCollection: !p.showInCollection };
+                  await fetch('/api/products', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated)
+                  });
+                  onStockUpdate(); // Refresh parent
+                }}
+              >
+                {p.showInCollection ? 'Unhide' : 'Show'}
+              </button>
               <button className={styles.editBtn} onClick={() => onEdit(p)}>Edit</button>
               <button className={styles.deleteBtn} onClick={() => onDelete(p.id!)}>Delete</button>
             </div>
@@ -826,7 +852,8 @@ export default function AdminPage() {
     name: '', category: CATEGORIES[0], description: '', isWeapon: false, 
     variants: [{ size: 'Standard', price: 0, old_price: 0, stock: 10, refillLevel: 3 }], image: '', model3d: '', rotation: 0, modelRotation: 0, modelRotationX: 0, modelRotationZ: 0,
     artifactType: 'Standard',
-    stock: 'In Stock'
+    stock: 'In Stock',
+    showInCollection: true
   };
 
   const [formData, setFormData] = useState<Product>(initialFormState);
@@ -1434,6 +1461,20 @@ export default function AdminPage() {
                       <option value="In Stock">In Stock</option>
                       <option value="Out of Stock">Out of Stock</option>
                     </select>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Collection Visibility</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.showInCollection !== false} 
+                        onChange={e => setFormData({...formData, showInCollection: e.target.checked})}
+                        style={{ width: '20px', height: '20px' }}
+                      />
+                      <span style={{ fontSize: '0.9rem', color: formData.showInCollection !== false ? '#BF953F' : '#888' }}>
+                        {formData.showInCollection !== false ? 'Show in Homepage Dial' : 'Hidden from Homepage'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

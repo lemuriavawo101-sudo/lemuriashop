@@ -23,8 +23,8 @@ export async function GET(request: Request) {
 
     const orders = result.rows.map((o: any) => ({
       ...o,
-      items: JSON.parse(o.items || '[]'),
-      delivery: JSON.parse(o.delivery || '{}')
+      items: typeof o.items === 'string' ? JSON.parse(o.items || '[]') : o.items,
+      delivery: typeof o.delivery === 'string' ? JSON.parse(o.delivery || '{}') : o.delivery
     }));
     return NextResponse.json(orders);
   } catch (error: any) {
@@ -51,7 +51,16 @@ export async function POST(request: Request) {
 
     await db.execute({
       sql: 'INSERT INTO orders (id, customer, total, status, date, items, delivery, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      args: [id, o.customer, o.total, 'Pending', date, JSON.stringify(o.items), JSON.stringify(o.delivery), userId]
+      args: [
+        id, 
+        o.customer, 
+        o.total, 
+        'Paid', 
+        date, 
+        typeof o.items === 'string' ? o.items : JSON.stringify(o.items), 
+        typeof o.delivery === 'string' ? o.delivery : JSON.stringify(o.delivery), 
+        userId
+      ]
     });
 
     return NextResponse.json({ ...o, id, date, status: 'Pending' }, { status: 201 });

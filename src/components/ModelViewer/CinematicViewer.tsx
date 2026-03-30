@@ -8,6 +8,7 @@ import Image from 'next/image';
 import * as THREE from 'three';
 import styles from './ModelViewer.module.css';
 import { usePerformance } from '@/context/PerformanceContext';
+import { gpuCache } from '@/lib/three-cache';
 
 useGLTF.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
 
@@ -25,6 +26,11 @@ interface CinematicViewerProps {
 function DynamicModel({ src, modelRotation, modelRotationX, modelRotationZ }: { src: string; modelRotation?: number; modelRotationX?: number; modelRotationZ?: number }) {
   const { scene } = useGLTF(src);
   const groupRef = useRef<THREE.Group>(null);
+
+  // Register with GPU Cache
+  useFrame(() => {
+    gpuCache.touch(src, scene as THREE.Group);
+  });
 
   useEffect(() => {
     scene.traverse((child) => {

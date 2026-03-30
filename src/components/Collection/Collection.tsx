@@ -32,6 +32,7 @@ interface Product {
   modelRotationZ?: number;
   artifactType: string;
   stock: 'In Stock' | 'Out of Stock';
+  showInCollection?: boolean;
   avgRating?: number | null;
   reviewCount?: number;
 }
@@ -256,8 +257,16 @@ const Dial = ({ products }: { products: Product[] }) => {
   const rafId = useRef<number>(0);
   const isVisible = useRef(false);
   const lastInteractionTime = useRef(Date.now());
+  const targetCenter = useRef<number | null>(null); 
+  const containerWidthRef = useRef(0);
   const cardsCache = useRef<{el: HTMLElement, offsetLeft: number, width: number}[]>([]);
-  const targetCenter = useRef<number | null>(null); // For smooth centering animation
+  
+  // Virtualization State
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 12 });
+  const CARD_WIDTH = 400;
+  const GAP = 40;
+  const STEP = CARD_WIDTH + GAP;
+  const BUFFER = 4;
 
   useEffect(() => {
     if (!dialRef.current) return;
@@ -277,15 +286,15 @@ const Dial = ({ products }: { products: Product[] }) => {
     );
     observer.observe(container);
 
-    // 2. Cache cards to avoid getBoundingClientRect in the loop
+    // 2. Cache cards and handle windowing logic
     const updateCache = () => {
+      containerWidthRef.current = container.clientWidth;
       const cards = container.querySelectorAll('[data-kinetic-card]');
       cardsCache.current = Array.from(cards).map(card => ({
         el: card as HTMLElement,
         offsetLeft: (card as HTMLElement).offsetLeft,
         width: (card as HTMLElement).offsetWidth
       }));
-      // Initialize scroll position on mount
       scrollFloat.current = container.scrollLeft;
     };
     updateCache();
@@ -344,15 +353,27 @@ const Dial = ({ products }: { products: Product[] }) => {
         lastInteractionTime.current = now;
       }
 
-      // 4. Optimized 3D Distortion using CACHED dimensions ONLY
-      const containerWidth = cardsCache.current[0]?.width * 2 || 1200;
-      const scrollPos = scrollFloat.current;
-      const centerX = scrollPos + containerWidth / 2;
+      // 4. Virtualization Logic: Update visible range based on scroll
+      const currentScroll = scrollFloat.current;
+      const viewWidth = containerWidthRef.current || 1200;
+      
+      const newStart = Math.max(0, Math.floor((currentScroll - viewWidth) / STEP) - BUFFER);
+      const newEnd = Math.min(products.length + 1, Math.ceil((currentScroll + viewWidth * 2) / STEP) + BUFFER);
+      
+      // Update visible range if it changed significantly (prevents constant re-renders)
+      if (Math.abs(newStart - visibleRange.start) > 1 || Math.abs(newEnd - visibleRange.end) > 1) {
+        setVisibleRange({ start: newStart, end: newEnd });
+        // We need to re-cache cards on next frame if indices changed
+        setTimeout(updateCache, 16);
+      }
 
-      cardsCache.current.forEach((card) => {
+      // 5. Optimized 3D Distortion using CACHED dimensions
+      const centerX = currentScroll + viewWidth / 2;
+
+      cardsCache.current.forEach((card: any) => {
         const cardCenter = card.offsetLeft + card.width / 2;
         const distFromCenter = cardCenter - centerX;
-        const maxDist = containerWidth / 2;
+        const maxDist = viewWidth / 2;
         
         const normalized = Math.max(-1, Math.min(1, distFromCenter / maxDist));
         const absDist = Math.abs(normalized);
@@ -484,17 +505,55 @@ const Dial = ({ products }: { products: Product[] }) => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-        <div className={styles.dialSpacer}></div>
-        {products.map((product) => (
-          <ProductCard 
-            key={product.id} 
-            product={product} 
-            addToCart={addToCart} 
-            onOpen3D={(p) => setSelected3D(p)}
-            onClick={() => handleCardClick(products.indexOf(product))}
-            onViewProduct={() => handleViewProduct(product.id)}
-          />
-        ))}
+        <div 
+          className={styles.virtualTrack} 
+          style={{ 
+            width: (products.length + 1) * STEP - GAP,
+            height: '100%',
+            position: 'relative',
+            flexShrink: 0
+          }}
+        >
+          {products.slice(visibleRange.start, visibleRange.end).map((product) => (
+            <div 
+              key={product.id}
+              style={{
+                position: 'absolute',
+                left: products.indexOf(product) * STEP,
+                top: 0
+              }}
+            >
+              <ProductCard 
+                product={product} 
+                addToCart={addToCart} 
+                onOpen3D={(p) => setSelected3D(p)}
+                onClick={() => handleCardClick(products.indexOf(product))}
+                onViewProduct={() => handleViewProduct(product.id)}
+              />
+            </div>
+          ))}
+
+          {/* VIEW ALL CARD */}
+          {visibleRange.end >= products.length && (
+            <div 
+              style={{
+                position: 'absolute',
+                left: products.length * STEP,
+                top: 0
+              }}
+              data-kinetic-card
+              className={styles.viewAllCard}
+              onClick={() => router.push(`/products?category=${products[0].category}`)}
+            >
+              <div className={styles.viewAllContent}>
+                <div className={styles.viewAllIcon}>📁+</div>
+                <h3 className={styles.viewAllText}>VIEW ALL</h3>
+                <p className={styles.viewAllSub}>{products[0].category.toUpperCase()}</p>
+                <div className={styles.viewAllArrow}>⟶</div>
+              </div>
+            </div>
+          )}
+        </div>
         <div className={styles.dialSpacer}></div>
       </div>
 
@@ -535,7 +594,7 @@ const Collection = ({ products }: { products: Product[] }) => {
       <div className={styles.kineticAura}></div>
       <div className={styles.container}>
         {categories.map((category) => {
-          const categoryProducts = products.filter(p => p.category === category);
+          const categoryProducts = products.filter(p => p.category === category && p.showInCollection !== false);
           if (categoryProducts.length === 0) return null;
 
           return (

@@ -24,9 +24,9 @@ export async function POST(request: Request) {
     const p = await request.json();
     
     const result = await db.execute({
-      sql: `INSERT INTO products (name, category, artifactType, description, isWeapon, image, model3d, rotation, modelRotation, modelRotationX, modelRotationZ, stock)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
-      args: [p.name, p.category, p.artifactType, p.description, p.isWeapon ? 1 : 0, p.image, p.model3d, p.rotation || 0, p.modelRotation || 0, p.modelRotationX || 0, p.modelRotationZ || 0, p.stock || 'In Stock']
+      sql: `INSERT INTO products (name, category, artifactType, description, isWeapon, image, model3d, rotation, modelRotation, modelRotationX, modelRotationZ, stock, showInCollection)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      args: [p.name, p.category, p.artifactType, p.description, p.isWeapon ? 1 : 0, p.image, p.model3d, p.rotation || 0, p.modelRotation || 0, p.modelRotationX || 0, p.modelRotationZ || 0, p.stock || 'In Stock', p.showInCollection !== undefined ? (p.showInCollection ? 1 : 0) : 1]
     });
     
     const productId = Number(result.rows[0].id);
@@ -52,9 +52,9 @@ export async function PUT(request: Request) {
     const p = await request.json();
     
     await db.execute({
-      sql: `UPDATE products SET name=?, category=?, artifactType=?, description=?, isWeapon=?, image=?, model3d=?, rotation=?, modelRotation=?, modelRotationX=?, modelRotationZ=?, stock=?
+      sql: `UPDATE products SET name=?, category=?, artifactType=?, description=?, isWeapon=?, image=?, model3d=?, rotation=?, modelRotation=?, modelRotationX=?, modelRotationZ=?, stock=?, showInCollection=?
             WHERE id = ?`,
-      args: [p.name, p.category, p.artifactType, p.description, p.isWeapon ? 1 : 0, p.image, p.model3d, p.rotation, p.modelRotation, p.modelRotationX, p.modelRotationZ, p.stock, p.id]
+      args: [p.name, p.category, p.artifactType, p.description, p.isWeapon ? 1 : 0, p.image, p.model3d, p.rotation, p.modelRotation, p.modelRotationX, p.modelRotationZ, p.stock, p.showInCollection ? 1 : 0, p.id]
     });
     
     // Update variants: simplify by delete and re-insert

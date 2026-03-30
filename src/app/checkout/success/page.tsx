@@ -3,12 +3,14 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import styles from './success.module.css';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { clearCart } = useCart();
+  const { user } = useAuth();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [error, setError] = useState('');
 
@@ -51,7 +53,8 @@ function SuccessContent() {
               ...acquisition,
               id: paymentId,
               status: 'Paid',
-              date: new Date().toISOString()
+              date: new Date().toISOString(),
+              uid: user?.uid || null
             })
           });
 
@@ -63,7 +66,6 @@ function SuccessContent() {
         clearCart();
         setStatus('success');
       } catch (err: any) {
-        setStatus('error');
         setError(err.message || 'The sanctuary handshake was interrupted.');
       }
     };
