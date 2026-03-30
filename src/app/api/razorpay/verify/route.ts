@@ -42,6 +42,13 @@ export async function POST(request: Request) {
     console.log('Verification SUCCESS:', expectedSignature === razorpay_signature);
     console.log('------------------------------------------------');
 
+    // CORS Headers for Razorpay Redirects
+    const headers = {
+      'Access-Control-Allow-Origin': 'https://api.razorpay.com',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    };
+
     if (expectedSignature === razorpay_signature) {
       // If it's a form post (redirect from Razorpay), we must redirect to success page
       if (contentType.includes('application/x-www-form-urlencoded')) {
@@ -49,11 +56,11 @@ export async function POST(request: Request) {
         successURL.searchParams.set('razorpay_payment_id', razorpay_payment_id as string);
         successURL.searchParams.set('razorpay_order_id', razorpay_order_id as string);
         successURL.searchParams.set('razorpay_signature', razorpay_signature as string);
-        return NextResponse.redirect(successURL);
+        return NextResponse.redirect(successURL.toString(), { headers });
       }
-      return NextResponse.json({ status: 'verified' });
+      return NextResponse.json({ status: 'verified' }, { headers });
     } else {
-      return NextResponse.json({ status: 'unverified' }, { status: 400 });
+      return NextResponse.json({ status: 'unverified' }, { status: 400, headers });
     }
   } catch (error) {
     console.error('Verification Error:', error);

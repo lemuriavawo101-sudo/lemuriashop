@@ -84,8 +84,10 @@ const CheckoutDrawer: React.FC = () => {
               variantSize: i.size, 
               quantity: i.quantity, 
               name: i.name,
-              // SANITIZATION: Remove local or relative paths that confuse Razorpay's CORS
-              image: i.image.startsWith('http') ? i.image : `https://${window.location.host}${i.image}`
+              // ABSOLUTE SANITIZATION: Vaporize any 'localhost' or '7070' traces from metadata
+              image: i.image.includes('localhost') || !i.image.startsWith('http') 
+                ? `https://${window.location.host}${i.image.replace(/http:\/\/localhost:\d+/, '')}` 
+                : i.image
             }))),
             total: total,
             customer: user?.name || 'Anonymous Practitioner',
