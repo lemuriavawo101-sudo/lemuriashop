@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import styles from './Footer.module.css';
 import { useAuth } from '@/context/AuthContext';
 import { usePerformance } from '@/context/PerformanceContext';
+import { ShieldCheck } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const { user } = useAuth();
@@ -69,9 +70,10 @@ const Footer: React.FC = () => {
             <Link href="/products">PRODUCTS</Link>
             <Link href="/#collection">CATEGORIES</Link>
             <Link href="/contact">CONTACT</Link>
-            {user?.role === 'admin' && (
-              <Link href="/admin">ADMIN</Link>
-            )}
+            <Link href="/admin" className={styles.curatorLink}>
+              <ShieldCheck size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+              CURATOR ACCESS
+            </Link>
           </div>
         </div>
 

@@ -4,17 +4,40 @@ import { cache } from 'react';
 // Helper to ensure objects are plain for Client Components
 const toPlain = (rows: any[]) => rows.map(r => ({ ...r }));
 
-export const getProducts = cache(async () => {
+export const getProducts = cache(async (limit?: number, offset?: number) => {
   try {
-    const result = await db.execute('SELECT * FROM products');
+    let sql = 'SELECT * FROM products';
+    const args: any[] = [];
+
+    if (limit !== undefined) {
+      sql += ' LIMIT ?';
+      args.push(limit);
+      if (offset !== undefined) {
+        sql += ' OFFSET ?';
+        args.push(offset);
+      }
+    }
+
+    const result = await db.execute({ sql, args });
     const products = toPlain(result.rows);
     
-    // Fetch all variants and join in memory
-    const variantResult = await db.execute('SELECT * FROM variants');
+    if (products.length === 0) return [];
+
+    const productIds = products.map(p => p.id);
+    const idPlaceholders = productIds.map(() => '?').join(',');
+
+    // Optimized: Fetch only variants for the current batch
+    const variantResult = await db.execute({
+      sql: `SELECT * FROM variants WHERE productId IN (${idPlaceholders})`,
+      args: productIds
+    });
     const allVariants = toPlain(variantResult.rows);
 
-    // Fetch all reviews for ratings
-    const reviewResult = await db.execute('SELECT productId, rating FROM reviews');
+    // Optimized: Fetch only review meta for the current batch
+    const reviewResult = await db.execute({
+      sql: `SELECT productId, rating FROM reviews WHERE productId IN (${idPlaceholders})`,
+      args: productIds
+    });
     const allReviews = toPlain(reviewResult.rows);
 
     return products.map((p: any) => {

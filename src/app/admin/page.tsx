@@ -303,7 +303,7 @@ const CategoryView = ({ products, onUpdate }: { products: Product[], onUpdate: (
   );
 };
 
-const InventoryView = ({ products, onAdd, onEdit, onDelete, onStockUpdate }: any) => {
+const InventoryView = ({ products, onAdd, onEdit, onDelete, onStockUpdate, onToggleVisibility }: any) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredProducts = useMemo(() => {
@@ -371,14 +371,9 @@ const InventoryView = ({ products, onAdd, onEdit, onDelete, onStockUpdate }: any
               <button 
                 className={styles.stockBtn} 
                 style={p.showInCollection ? { borderColor: '#BF953F', color: '#BF953F' } : {}}
-                onClick={async () => {
-                  const updated = { ...p, showInCollection: !p.showInCollection };
-                  await fetch('/api/products', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updated)
-                  });
-                  onStockUpdate(); // Refresh parent
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleVisibility(p);
                 }}
               >
                 {p.showInCollection ? 'Unhide' : 'Show'}
@@ -866,7 +861,8 @@ export default function AdminPage() {
   useEffect(() => {
     // Check auth first
     const savedAuth = sessionStorage.getItem('admin_auth');
-    if (savedAuth === 'true') {
+    const savedToken = sessionStorage.getItem('curator_token');
+    if (savedAuth === 'true' && savedToken) {
       setIsAuthenticated(true);
     }
 
@@ -879,7 +875,7 @@ export default function AdminPage() {
     fetch('/api/showcase').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setShowcaseIds(data);
     });
-  }, []);
+  }, [isAuthenticated]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -897,6 +893,7 @@ export default function AdminPage() {
       if (resp.ok && data.success) {
         setIsAuthenticated(true);
         sessionStorage.setItem('admin_auth', 'true');
+        sessionStorage.setItem('curator_token', data.token);
         setAuthError(false);
       } else {
         setAuthError(true);
@@ -912,24 +909,38 @@ export default function AdminPage() {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+    const token = sessionStorage.getItem('curator_token');
+    if (!token) {
+      console.warn('ARCHIVE: UNAUTHORIZED REQUEST BLOCKED [NO TOKEN]');
+      return;
+    }
+
     try {
       if (activeView === 'inventory') {
-        const resp = await fetch('/api/products');
+        const resp = await fetch('/api/products', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await resp.json();
         if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch products');
         setProducts(data);
       } else if (activeView === 'orders') {
-        const resp = await fetch('/api/orders');
+        const resp = await fetch('/api/orders', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await resp.json();
         if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch orders');
         setOrders(data);
       } else if (activeView === 'users' || activeView === 'leads') {
-        const resp = await fetch('/api/users');
+        const resp = await fetch('/api/users', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await resp.json();
         if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch users');
         setUsers(data);
       } else if (activeView === 'enquiries') {
-        const resp = await fetch('/api/admin/enquiries');
+        const resp = await fetch('/api/admin/enquiries', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await resp.json();
         if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch enquiries');
         setEnquiries(data);
@@ -943,10 +954,14 @@ export default function AdminPage() {
   };
 
   const handleStatusUpdate = async (id: string, status: string) => {
+    const token = sessionStorage.getItem('curator_token');
     try {
       await fetch('/api/orders', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ id, status })
       });
       fetchData();
@@ -955,10 +970,14 @@ export default function AdminPage() {
 
   const handleDeleteOrder = async (id: string) => {
     if (!confirm('Permanently remove this acquisition from the archive?')) return;
+    const token = sessionStorage.getItem('curator_token');
     try {
       await fetch('/api/orders', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ id })
       });
       fetchData();
@@ -975,8 +994,14 @@ export default function AdminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const method = editingProduct ? 'PUT' : 'POST';
+    const token = sessionStorage.getItem('curator_token');
     await fetch('/api/products', {
-      method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData)
+      method, 
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }, 
+      body: JSON.stringify(formData)
     });
     setIsModalOpen(false);
     fetchData();
@@ -988,10 +1013,14 @@ export default function AdminPage() {
       return;
     }
 
+    const token = sessionStorage.getItem('curator_token');
     try {
       const resp = await fetch('/api/categories', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ oldName: formData.category, newName: renameValue })
       });
 
@@ -1008,9 +1037,46 @@ export default function AdminPage() {
     }
   };
 
+  const handleToggleVisibility = async (p: Product) => {
+    const originalState = p.showInCollection;
+    const newState = !originalState;
+
+    // Optimistic Update
+    setProducts(prev => prev.map(item => 
+      item.id === p.id ? { ...item, showInCollection: newState } : item
+    ));
+
+    const token = sessionStorage.getItem('curator_token');
+    try {
+      const resp = await fetch('/api/products', {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ...p, showInCollection: newState })
+      });
+      if (!resp.ok) throw new Error('Visibility update failed');
+    } catch (err) {
+      console.error('Visibility update error:', err);
+      // Revert if failed
+      setProducts(prev => prev.map(item => 
+        item.id === p.id ? { ...item, showInCollection: originalState } : item
+      ));
+    }
+  };
+
   const handleDelete = async (id: number) => {
     if (!confirm('Proceed with deletion?')) return;
-    await fetch('/api/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    const token = sessionStorage.getItem('curator_token');
+    await fetch('/api/products', { 
+      method: 'DELETE', 
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }, 
+      body: JSON.stringify({ id }) 
+    });
     fetchData();
   };
 
@@ -1059,9 +1125,13 @@ export default function AdminPage() {
   const handleSeed = async () => {
     if (!confirm('CRITICAL ACTION: This will overwrite ALL current product, deal, and review data with the master seed archive. Proceed?')) return;
     
+    const token = sessionStorage.getItem('curator_token');
     setLoading(true);
     try {
-      const resp = await fetch('/api/admin/seed', { method: 'POST' });
+      const resp = await fetch('/api/admin/seed', { 
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (resp.ok) {
         alert('Archive restored to master seed state.');
         window.location.reload();
@@ -1097,9 +1167,13 @@ export default function AdminPage() {
   const handleBackfill = async () => {
     if (!confirm('This will associate orphaned historical orders to registered practitioner accounts where names match. Proceed?')) return;
     
+    const token = sessionStorage.getItem('curator_token');
     setLoading(true);
     try {
-      const resp = await fetch('/api/admin/backfill', { method: 'POST' });
+      const resp = await fetch('/api/admin/backfill', { 
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (resp.ok) {
         const data = await resp.json();
         alert(`Archive Cleanse Complete: ${data.updated} records successfully associated.`);
@@ -1218,6 +1292,7 @@ export default function AdminPage() {
               setStockFilterId(p?.id ?? null);
               setIsStockModalOpen(true);
             }}
+            onToggleVisibility={handleToggleVisibility}
           />
         ) : activeView === 'orders' ? (
           <OrdersView orders={orders} onStatusUpdate={handleStatusUpdate} onDelete={handleDeleteOrder} />

@@ -3,6 +3,8 @@ import Link from 'next/link';
 import styles from './Products.module.css';
 import FilterSidebar from './FilterSidebar';
 import ProductGridCard from './ProductGridCard';
+import ProductInfiniteList from '@/components/Products/ProductInfiniteList';
+import ProductCollectionLayout from './ProductCollectionLayout';
 import { getProducts } from '@/lib/data';
 
 export const metadata = {
@@ -76,34 +78,33 @@ export default async function ProductsPage({
         </div>
       </header>
 
-      <main className={styles.container}>
-        <div className={styles.mainLayout}>
-          <Suspense fallback={<div>Loading Filters...</div>}>
-            <FilterSidebar />
+      <main>
+        <ProductCollectionLayout 
+          sidebar={
+            <Suspense fallback={<div>Loading Filters...</div>}>
+              <FilterSidebar />
+            </Suspense>
+          }
+        >
+          <div className={styles.gridInfo}>
+            {/* The count will be managed within the layout alongside the toggle button */}
+          </div>
+
+          <Suspense fallback={<div className={styles.loadingTrigger}>LOADING ARCHIVE...</div>}>
+            <ProductInfiniteList 
+              initialProducts={filteredProducts.slice(0, 12)} 
+              totalCount={filteredProducts.length} 
+              searchParams={params}
+            />
           </Suspense>
 
-          <section className={styles.contentArea}>
-            <div className={styles.gridInfo}>
-              <div className={styles.count}>SHOWING {filteredProducts.length} OF {products.length} ARTIFACTS</div>
+          {filteredProducts.length === 0 && (
+            <div className={styles.emptyState}>
+              <h3 className={styles.emptyTitle}>NO MATCHES IN THE CRYPT</h3>
+              <p>Try adjusting your search or filters to discover hidden heritage.</p>
             </div>
-
-            <div className={styles.productGrid}>
-              {filteredProducts.map((product: any) => (
-                <ProductGridCard 
-                  key={product.id} 
-                  product={product} 
-                />
-              ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-              <div className={styles.emptyState}>
-                <h3 className={styles.emptyTitle}>NO MATCHES IN THE CRYPT</h3>
-                <p>Try adjusting your search or filters to discover hidden heritage.</p>
-              </div>
-            )}
-          </section>
-        </div>
+          )}
+        </ProductCollectionLayout>
       </main>
     </div>
   );

@@ -79,19 +79,44 @@ function DynamicModel({ src, modelRotation, modelRotationX, modelRotationZ }: { 
 
 const CinematicViewer: React.FC<CinematicViewerProps> = ({ src, name, image, onClose, modelRotation, modelRotationX, modelRotationZ }) => {
   const [mounted, setMounted] = React.useState(false);
+  const [signedUrl, setSignedUrl] = React.useState<string | null>(null);
   const { isLowPower, webGLSupported } = usePerformance();
+  const [fov, setFov] = React.useState(45);
 
   useEffect(() => {
+    // SECURITY FETCH: Request a 'Digital Twin Key' (Signed URL)
+    const fetchSignedUrl = async () => {
+      try {
+        const resp = await fetch(`/api/models/get-signed-url?modelId=${encodeURIComponent(src)}`);
+        const data = await resp.json();
+        if (data.signedUrl) {
+          setSignedUrl(data.signedUrl);
+        }
+      } catch (err) {
+        console.error('Digital Twin Access Failure:', err);
+      }
+    };
+    fetchSignedUrl();
+    
+    // VIEWPORT SENSING: Adjust FOV for portrait mode
+    const handleResize = () => {
+      const isPortrait = window.innerHeight > window.innerWidth;
+      setFov(isPortrait ? 60 : 45);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
     setMounted(true);
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'unset';
+      window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [src]);
 
   if (!mounted) return null;
 
-  const show3D = webGLSupported && !isLowPower;
+  const show3D = webGLSupported && !isLowPower && signedUrl;
 
   const content = (
     <div className={styles.overlay}>
@@ -118,7 +143,7 @@ const CinematicViewer: React.FC<CinematicViewerProps> = ({ src, name, image, onC
         <div className={styles.canvasContainer}>
           {show3D ? (
             <View className={styles.canvas}>
-              <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
+              <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={fov} />
               <ambientLight intensity={0.5} />
               <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2} />
               <pointLight position={[-10, -10, -10]} intensity={1} />

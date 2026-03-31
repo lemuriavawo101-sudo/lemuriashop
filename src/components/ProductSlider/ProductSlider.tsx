@@ -342,9 +342,8 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
               </div>
               <p className={styles.description}>{product.description}</p>
 
-              {product.variants.length > 1 && (
+              {product.variants && product.variants.length > 0 && (
                 <div className={styles.variantSelection}>
-                  <span className={styles.variantLabel}>SIZE:</span>
                   <div className={styles.variantButtons}>
                     {product.variants.map((v, idx) => (
                       <button 

@@ -57,7 +57,7 @@ function InteractionHandler({ isInteracting, targetPos }: { isInteracting: boole
 
 // Apply cinematic, site-matching material overrides to the loaded model
 function WeaponModel({ isInteracting, onLoaded }: { isInteracting: boolean, onLoaded?: () => void }) {
-  const { scene } = useGLTF('/lionguard_sword_and_shield.glb');
+  const { scene } = useGLTF('https://raw.githubusercontent.com/lemuriavawo101-sudo/lemuriashoparchive/main/artifacts/lionguard_sword_and_shield.glb');
   const groupRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
@@ -93,11 +93,10 @@ function WeaponModel({ isInteracting, onLoaded }: { isInteracting: boolean, onLo
   // Controlled cinematic oscillation (Posing animation)
   useFrame((state) => {
     if (!groupRef.current || isInteracting) return;
-    const time = state.clock.getElapsedTime();
     // Subtle floating Y oscillation
-    groupRef.current.position.y = Math.sin(time) * 0.1;
+    groupRef.current.position.y = Math.sin(state.clock.elapsedTime) * 0.1;
     // Posing animation: slow rotation to left and right
-    groupRef.current.rotation.y = Math.sin(time * 0.3) * 0.5;
+    groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.5;
   });
 
   return (

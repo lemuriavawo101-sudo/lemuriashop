@@ -1,14 +1,27 @@
 "use client";
 
-import React, { useState, useRef, useEffect, memo } from 'react';
+/**
+ * 🏺 LEMURIA HERITAGE - COLLECTION RECONSTRUCTION (v14.0)
+ * MECHANICAL CHRONOMETER MODEL - TABULA RASA
+ * 
+ * Features:
+ * - Direct "Spotlight" Interaction (No Fisheye Drift)
+ * - Binary 1.5x Hero Pop Snap (±0.51 Trigger)
+ * - Industrial-Grade Spacing (10% Overlap / 252px Step)
+ * - Symmetrical 50vw Screen-Center Anchoring
+ */
+
+import React, { useState, useRef, useEffect, memo, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { motion, useMotionValue, useTransform, useSpring, MotionValue, animate } from 'framer-motion';
 import styles from './Collection.module.css';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from '@/context/ToastContext';
 import CinematicViewer from '../ModelViewer/CinematicViewer';
 import { usePerformance } from '@/context/PerformanceContext';
+import { Heart, Share2, Box, Eye } from 'lucide-react';
 
 interface Variant {
   size: string;
@@ -33,41 +46,29 @@ interface Product {
   artifactType: string;
   stock: 'In Stock' | 'Out of Stock';
   showInCollection?: boolean;
-  avgRating?: number | null;
-  reviewCount?: number;
 }
 
-const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct }: { 
+/**
+ * EXHIBITION CARD - THE MASTERPIECE VIEW
+ */
+const ExhibitionCard = memo(({ product, addToCart, onOpen3D, onViewProduct }: { 
   product: Product; 
   addToCart: (product: any, variant: any) => void; 
   onOpen3D: (product: Product) => void;
-  onClick: () => void;
   onViewProduct: () => void;
 }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
   const { isLowPower, webGLSupported } = usePerformance();
   const [selectedVariant, setSelectedVariant] = useState(0);
-  const [imageError, setImageError] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   const variant = product.variants[selectedVariant];
   const itemInWishlist = isInWishlist(product.id);
 
   const handleShare = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
-    
     const url = `${window.location.origin}/products/${product.id}`;
-    const title = `Check out ${product.name} at Lemuria Heritage`;
-    
     if (navigator.share) {
-      navigator.share({
-        title,
-        text: product.description,
-        url,
-      }).catch(err => {
-        console.error("Error sharing:", err);
-      });
+      navigator.share({ title: product.name, text: product.description, url }).catch(console.error);
     } else {
       navigator.clipboard.writeText(url);
       showToast("Link copied to clipboard!");
@@ -75,95 +76,44 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct
   };
   
   const show3D = webGLSupported && !isLowPower;
+  const isOutOfStock = product.stock === 'Out of Stock' || product.variants.every(v => v.stock <= 0);
 
-  const getIcon = (category: string) => {
-    if (category === "Weapons") return "⚔️";
-    if (category === "Books") return "📜";
-    if (category === "Decoration") return "🏺";
-    if (category === "Attire") return "👘";
-    return "🛡️";
-  };
-
-  const isOutOfStock = product.stock === 'Out of Stock' || (variant && variant.stock <= 0);
-  const isAltTogetherOutOfStock = product.stock === 'Out of Stock' || (product.variants && product.variants.every(v => v.stock <= 0));
-
-  // The card is now a 'dumb' receiver that the Dial component updates via refs
   return (
-    <div 
-      className={`${styles.kineticCard} ${isAltTogetherOutOfStock ? styles.outOfStockCard : ''}`} 
-      ref={cardRef} 
-      data-kinetic-card 
-      onClick={onClick}
-      style={{ cursor: 'pointer' }}
-    >
+    <div className={`${styles.kineticCard} ${isOutOfStock ? styles.outOfStockCard : ''}`}>
       <div className={styles.imageWrapper}>
-        {!imageError ? (
-          <div 
-            className={styles.imageContainer}
-            style={{ 
-              transform: product.rotation ? `rotate(${product.rotation}deg) scale(0.9)` : 'none'
-            }}
-          >
-            <Image 
-              src={product.image} 
-              alt={product.name} 
-              fill 
-              className={`${styles.image} ${product.isWeapon ? styles.weaponImage : ''}`}
-              sizes="(max-width: 768px) 100vw, 33vw"
-              draggable={false}
-              onError={() => setImageError(true)}
-            />
-          </div>
-        ) : (
-          <div className={styles.fallbackImage}>
-            <span>{product.name[0]}</span>
-          </div>
-        )}
+        <div className={styles.imageContainer}>
+          <Image 
+            src={product.image} 
+            alt={product.name} 
+            fill 
+            className={styles.image}
+            style={{ transform: `rotate(${product.rotation || 0}deg)` }}
+            sizes="(max-width: 768px) 100vw, 33vw"
+            draggable={false}
+            priority={false}
+          />
+        </div>
         
-        {isAltTogetherOutOfStock && (
-          <div className={styles.outOfStockBadge}>OUT OF STOCK</div>
-        )}
+        {isOutOfStock && <div className={styles.outOfStockBadge}>EXHAUSTED</div>}
 
         <button 
           className={`${styles.wishlistBtn} ${itemInWishlist ? styles.wishlistActive : ''}`}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleWishlist(product);
-          }}
-          title={itemInWishlist ? "Removed from preservation" : "Preserve in Wishlist"}
+          onClick={(e) => { e.stopPropagation(); toggleWishlist(product); }}
         >
-          <svg viewBox="0 0 24 24" fill={itemInWishlist ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-          </svg>
+          <Heart 
+            size={16} 
+            fill={itemInWishlist ? "#BF953F" : "none"} 
+            color={itemInWishlist ? "#BF953F" : "currentColor"} 
+          />
         </button>
 
-        <button 
-          className={styles.shareBtn}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={handleShare}
-          title="Share Artifact"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="18" cy="5" r="3"></circle>
-            <circle cx="6" cy="12" r="3"></circle>
-            <circle cx="18" cy="19" r="3"></circle>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-          </svg>
+        <button className={styles.shareBtn} onClick={handleShare}>
+           <Share2 size={16} />
         </button>
 
         {product.model3d && (
-          <button 
-            className={styles.view3dBtn}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onOpen3D(product);
-            }}
-          >
+          <button className={styles.view3dBtn} onClick={(e) => { e.stopPropagation(); onOpen3D(product); }}>
+            <Box size={14} style={{ marginRight: '6px' }} />
             <span>{show3D ? '3D VIEW' : 'ENLARGE'}</span>
           </button>
         )}
@@ -172,29 +122,14 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct
       <div className={styles.content}>
         <div className={styles.tagLine}>{product.category.toUpperCase()}</div>
         <h3 className={styles.productName}>{product.name.toUpperCase()}</h3>
-        <div className={styles.ratingRow}>
-          {product.avgRating ? (
-            <>
-              <div className={styles.stars}>
-                {'★'.repeat(Math.floor(product.avgRating))}{'☆'.repeat(5 - Math.floor(product.avgRating))}
-              </div>
-              <span className={styles.reviewCount}>({product.reviewCount})</span>
-            </>
-          ) : (
-            <span className={styles.unrated}>UNRATED</span>
-          )}
-        </div>
-        
-        <div className={styles.variants}>
+        <div className={styles.artifactTypeBadge}>{product.artifactType || "ARCHIVAL"}</div>
+       
+        <div className={styles.variants} onPointerDown={(e) => e.stopPropagation()}>
           {product.variants.map((v, i) => (
             <button 
               key={i}
               className={`${styles.variantPill} ${selectedVariant === i ? styles.variantPillActive : ''}`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setSelectedVariant(i);
-              }}
+              onClick={(e) => { e.stopPropagation(); setSelectedVariant(i); }}
             >
               {v.size}
             </button>
@@ -208,374 +143,235 @@ const ProductCard = memo(({ product, addToCart, onOpen3D, onClick, onViewProduct
           </div>
         </div>
 
-        <button 
-          className="btnPremium btnPremiumGold"
-          disabled={isOutOfStock}
-          onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!isOutOfStock) addToCart(product, variant);
-          }}
-          style={{ width: '100%', marginTop: 'auto' }}
-        >
-          {isOutOfStock ? 'OUT OF STOCK' : 'ACQUIRE'} <span className={styles.arrow}>→</span>
-        </button>
-
-        <button 
-          className="btnPremium btnPremiumGlass"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onViewProduct();
-          }}
-          style={{ width: '100%', marginTop: '12px' }}
-        >
-          VIEW PRODUCT <span className={styles.arrow}>→</span>
-        </button>
+        <div className={styles.buttonRow}>
+          <button 
+            className="btnPremium btnPremiumGold"
+            disabled={isOutOfStock}
+            onClick={(e) => { e.stopPropagation(); if (!isOutOfStock) addToCart(product, variant); }}
+            style={{ flex: 1 }}
+          >
+            {isOutOfStock ? 'OUT' : 'ACQUIRE'}
+          </button>
+          <button 
+            className="btnPremium btnPremiumGlass"
+            onClick={(e) => { e.stopPropagation(); onViewProduct(); }}
+            style={{ flex: 1 }}
+          >
+            VIEW
+          </button>
+        </div>
       </div>
     </div>
   );
 });
 
-ProductCard.displayName = 'ProductCard';
+ExhibitionCard.displayName = 'ExhibitionCard';
 
+/**
+ * CHRONOMETER ITEM - VIRTUALIZED FRAGMENT
+ */
+const ChronometerItem = memo(({ item, idx, virtualIndex, VISUAL_STEP, products, addToCart, onOpen3D, onViewProduct, activeIndex, isMobile }: any) => {
+  const router = useRouter();
+
+  // Binary Step-Function Scaling: [idx-0.51, idx-0.5, idx, idx+0.5, idx+0.51] -> [0.8, 0.8, 1.3, 0.8, 0.8]
+  const scale = useTransform(virtualIndex, 
+    [idx - 0.51, idx - 0.5, idx, idx + 0.5, idx + 0.51], 
+    [0.8, 0.8, 1.3, 0.8, 0.8]
+  );
+
+  const rotateY = useTransform(virtualIndex, [idx - 0.5, idx, idx + 0.5], [-35, 0, 35]);
+  
+  // High-Contrast Binary Opacity: Artifact only ignites inside the lens
+  const opacity = useTransform(virtualIndex, 
+    [idx - 0.51, idx - 0.5, idx, idx + 0.5, idx + 0.51], 
+    isMobile ? [0.05, 0.05, 1, 0.05, 0.05] : [0.2, 0.2, 1, 0.2, 0.2]
+  );
+
+  // Advanced Depth-Z (Pop-out effect)
+  const zIndexVal = useTransform(virtualIndex, (v) => Math.round(100 - Math.abs(idx - v) * 20));
+
+  const isVisible = Math.abs(idx - activeIndex) <= 4;
+  if (!isVisible) return <div style={{ flex: `0 0 ${VISUAL_STEP}px` }} />;
+
+  return (
+    <motion.div
+      className={styles.motionCardWrapper}
+      style={{
+        flex: `0 0 ${VISUAL_STEP}px`,
+        scale,
+        rotateY,
+        opacity,
+        zIndex: zIndexVal,
+      }}
+    >
+      {item._viewAll ? (
+        <div className={styles.viewAllCard}>
+          <div className={styles.viewAllContent}>
+            <div className={styles.folderIcon} />
+            <h3 className={styles.viewAllText}>ARCHIVE</h3>
+            <button 
+              className="btnPremium btnPremiumGold"
+              onClick={() => router.push(`/products?cat=${products[0]?.category}`)}
+            >
+              EXPLORE
+            </button>
+          </div>
+        </div>
+      ) : (
+        <ExhibitionCard
+          product={item}
+          addToCart={addToCart}
+          onOpen3D={onOpen3D}
+          onViewProduct={() => onViewProduct(item.id)}
+        />
+      )}
+    </motion.div>
+  );
+});
+
+ChronometerItem.displayName = 'ChronometerItem';
+
+/**
+ * THE DIAL - INDUSTRIAL PRECISION INSTRUMENT
+ */
 const Dial = ({ products }: { products: Product[] }) => {
-  const dialRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { addToCart } = useCart();
   const [selected3D, setSelected3D] = useState<Product | null>(null);
+  const [cardWidth, setCardWidth] = useState(280);
+  const [isMobile, setIsMobile] = useState(false);
+  const autoPlayControls = useRef<any>(null);
+  const autoPlayTimeout = useRef<any>(null);
+  const isInteracting = useRef(false);
   
-  // Kinetic State (Refs for zero re-render)
-  const isDown = useRef(false);
-  const isHovered = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-  const scrollFloat = useRef(0);
-  const velocity = useRef(0);
-  const dragDistance = useRef(0);
-  const lastTime = useRef(Date.now());
-  const rafId = useRef<number>(0);
-  const isVisible = useRef(false);
-  const lastInteractionTime = useRef(Date.now());
-  const targetCenter = useRef<number | null>(null); 
-  const containerWidthRef = useRef(0);
-  const cardsCache = useRef<{el: HTMLElement, offsetLeft: number, width: number, idx: number}[]>([]);
-  
-  // Virtualization State
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 12 });
-  const CARD_WIDTH = 400;
-  const GAP = 40;
-  const STEP = CARD_WIDTH + GAP;
-  const BUFFER = 4;
+  const VISUAL_STEP = cardWidth * 0.9; 
+  const totalWidth = (products.length - 1) * VISUAL_STEP;
+
+  const startAutoMotion = (startFromCurrent: boolean = false) => {
+    if (autoPlayControls.current) autoPlayControls.current.stop();
+    if (products.length <= 1) return;
+
+    const currentX = x.get();
+    const targetX = currentX >= -10 ? -totalWidth : 0;
+    const remainingDistance = Math.abs(targetX - currentX);
+    const duration = (remainingDistance / VISUAL_STEP) * 6; // 6 seconds per artifact step
+
+    autoPlayControls.current = animate(x, targetX, {
+      duration: duration,
+      ease: "linear",
+      onComplete: () => {
+        // Ping-pong reversal with delay
+        autoPlayTimeout.current = setTimeout(() => startAutoMotion(), 2000);
+      }
+    });
+  };
 
   useEffect(() => {
-    if (!dialRef.current) return;
-    
-    const container = dialRef.current;
-    
-    // 0. Remove scroll restoration as it causes a "snap" on page load
-    // The user prefers the standard scroll behavior
-    sessionStorage.removeItem('lastDialProductId');
-
-    // 1. Setup Intersection Observer to hibernate the loop
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        isVisible.current = entry.isIntersecting;
-      },
-      { threshold: 0 } // Wake up immediately on first pixel of scroll
-    );
-    observer.observe(container);
-
-    // 2. Cache cards and handle windowing logic
-    const updateCache = () => {
-      if (!container) return;
-      containerWidthRef.current = container.clientWidth;
-      const cards = container.querySelectorAll('[data-kinetic-card]');
-      cardsCache.current = Array.from(cards).map(card => {
-        const el = card as HTMLElement;
-        const indexStr = el.getAttribute('data-index') || '0';
-        return {
-          el,
-          offsetLeft: parseInt(indexStr) * STEP,
-          width: CARD_WIDTH,
-          idx: parseInt(indexStr)
-        };
-      });
-      scrollFloat.current = container.scrollLeft;
-    };
-    updateCache();
-
-    window.addEventListener('resize', updateCache);
-
-    // Drift direction: 1 = right, -1 = left
-    let driftDir = 1;
-
-    const update = () => {
-      if (!isVisible.current) {
-        rafId.current = requestAnimationFrame(update);
-        return;
-      }
-
-      const now = Date.now();
-      const maxScroll = container.scrollWidth - container.clientWidth;
-      const timeSinceLastInput = now - lastInteractionTime.current;
-
-      if (!isDown.current) {
-        if (targetCenter.current !== null) {
-          // 1. Centering Animation
-          const diff = targetCenter.current - scrollFloat.current;
-          if (Math.abs(diff) < 0.5) {
-            scrollFloat.current = targetCenter.current;
-            targetCenter.current = null;
-            velocity.current = 0;
-          } else {
-            scrollFloat.current += diff * 0.08;
-            velocity.current = 0;
-          }
-          container.scrollLeft = scrollFloat.current;
-        } else if (Math.abs(velocity.current) > 0.05) {
-          // 2. Momentum
-          scrollFloat.current += velocity.current;
-          velocity.current *= 0.95;
-          if (scrollFloat.current < 0) scrollFloat.current = 0;
-          if (scrollFloat.current > maxScroll) scrollFloat.current = maxScroll;
-          container.scrollLeft = scrollFloat.current;
-        } else if (maxScroll > 0 && timeSinceLastInput > 2000) {
-          // 3. Cinematic Drift — slow ping-pong sweep
-          const speed = 0.5; // ~30px/sec at 60fps — gentle museum drift
-          scrollFloat.current += speed * driftDir;
-
-          if (scrollFloat.current >= maxScroll) {
-            scrollFloat.current = maxScroll;
-            driftDir = -1;
-          } else if (scrollFloat.current <= 0) {
-            scrollFloat.current = 0;
-            driftDir = 1;
-          }
-
-          container.scrollLeft = scrollFloat.current;
-        }
-      } else {
-        lastInteractionTime.current = now;
-      }
-
-      // 4. Virtualization Logic: Update visible range based on scroll
-      const currentScroll = scrollFloat.current;
-      const viewWidth = containerWidthRef.current || 1200;
-      
-      const newStart = Math.max(0, Math.floor((currentScroll - viewWidth) / STEP) - BUFFER);
-      const newEnd = Math.min(products.length + 1, Math.ceil((currentScroll + viewWidth * 2) / STEP) + BUFFER);
-      
-      // Update visible range if it changed significantly (prevents constant re-renders)
-      if (Math.abs(newStart - visibleRange.start) > 1 || Math.abs(newEnd - visibleRange.end) > 1) {
-        setVisibleRange({ start: newStart, end: newEnd });
-        // We need to re-cache cards on next frame if indices changed
-        setTimeout(updateCache, 16);
-      }
-
-      // 5. Optimized 3D Distortion using STABLE absolute positioning
-      const centerX = currentScroll + (viewWidth / 2);
-
-      cardsCache.current.forEach((card: any) => {
-        const cardCenter = card.offsetLeft + card.width / 2;
-        const distFromCenter = cardCenter - centerX;
-        const maxDist = viewWidth * 0.8; // Wider falloff prevents "striping"
-        
-        const normalized = Math.max(-1.5, Math.min(1.5, distFromCenter / maxDist));
-        const absDist = Math.abs(normalized);
-        
-        const scale = 1 - Math.min(0.2, absDist * 0.12);
-        const rotateY = normalized * -15;
-        const translateZ = absDist * -100;
-        const opacity = Math.max(0.1, 1 - absDist * 0.7);
-        
-        card.el.style.transform = `
-          perspective(1000px)
-          scale(${scale})
-          rotateY(${rotateY}deg)
-          translateZ(${translateZ}px)
-        `;
-        card.el.style.opacity = opacity.toString();
-      });
-
-      rafId.current = requestAnimationFrame(update);
-    };
-
-    rafId.current = requestAnimationFrame(update);
+    // Initial start
+    const timer = setTimeout(() => startAutoMotion(), 3000);
     return () => {
-      cancelAnimationFrame(rafId.current);
-      observer.disconnect();
-      window.removeEventListener('resize', updateCache);
+      clearTimeout(timer);
+      if (autoPlayControls.current) autoPlayControls.current.stop();
+      if (autoPlayTimeout.current) clearTimeout(autoPlayTimeout.current);
     };
+  }, [products.length, totalWidth]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (window.innerWidth < 480) setCardWidth(240);
+      else setCardWidth(280);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleMouseEnter = () => { isHovered.current = true; };
-  const handleMouseLeave = () => { isHovered.current = false; if (isDown.current) handleMouseUp(); };
+  const x = useMotionValue(0);
+  const xSpring = useSpring(x, { stiffness: 400, damping: 45 });
+  const virtualIndex = useTransform(xSpring, (val) => -val / VISUAL_STEP);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    isDown.current = true;
-    startX.current = e.pageX;
-    dragDistance.current = 0;
-    lastTime.current = Date.now();
-    lastInteractionTime.current = Date.now();
-    scrollLeft.current = dialRef.current?.scrollLeft || 0;
-    scrollFloat.current = scrollLeft.current;
-    velocity.current = 0;
-    targetCenter.current = null;
-    if (dialRef.current) dialRef.current.style.cursor = 'grabbing';
+  const onDragStart = () => {
+    isInteracting.current = true;
+    if (autoPlayControls.current) autoPlayControls.current.stop();
+    if (autoPlayTimeout.current) clearTimeout(autoPlayTimeout.current);
   };
 
-  const handleMouseUp = () => {
-    isDown.current = false;
-    if (dialRef.current) dialRef.current.style.cursor = 'grab';
-  };
-
-  const handleDragUpdate = (clientX: number) => {
-    if (!isDown.current || !dialRef.current) return;
-    const x = clientX;
-    const walk = (x - startX.current) * 1.5;
-    dragDistance.current = Math.abs(x - startX.current);
-    lastTime.current = Date.now();
+  const onDragEnd = (event: any, info: any) => {
+    isInteracting.current = false;
+    const currentX = x.get();
     
-    const oldScroll = scrollFloat.current;
-    const targetScroll = scrollLeft.current - walk;
+    // Snapping logic
+    const closestIndex = Math.round(Math.abs(currentX) / VISUAL_STEP);
+    const snapX = -closestIndex * VISUAL_STEP;
     
-    dialRef.current.scrollLeft = targetScroll;
-    scrollFloat.current = targetScroll;
-    
-    const instantVelocity = targetScroll - oldScroll;
-    velocity.current = velocity.current * 0.4 + instantVelocity * 0.6;
+    animate(x, snapX, {
+      type: "spring",
+      stiffness: 260,
+      damping: 28,
+      onComplete: () => {
+        // Resume auto-motion after delay
+        if (!isInteracting.current) {
+          autoPlayTimeout.current = setTimeout(() => startAutoMotion(), 4000);
+        }
+      }
+    });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    handleDragUpdate(e.pageX);
-  };
+  const lastInteraction = useRef(Date.now());
+  const allItems = useMemo(() => [...products, { id: -1, _viewAll: true } as any], [products]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    isDown.current = true;
-    startX.current = e.touches[0].pageX;
-    dragDistance.current = 0;
-    lastTime.current = Date.now();
-    lastInteractionTime.current = Date.now();
-    scrollLeft.current = dialRef.current?.scrollLeft || 0;
-    scrollFloat.current = scrollLeft.current;
-    velocity.current = 0;
-    targetCenter.current = null;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    handleDragUpdate(e.touches[0].pageX);
-  };
-
-  const handleTouchEnd = () => {
-    isDown.current = false;
-  };
-
-  const handleCardClick = (index: number) => {
-    // Prevent click if we dragged specifically (more than 5px)
-    if (dragDistance.current > 5) return;
-    
-    // Prevent centering if we just finished a significant flick
-    if (Math.abs(velocity.current) > 2) return;
-
-    // Smoothly animate the clicked card to center via the kinetic loop
-    if (!dialRef.current) return;
-    const cards = dialRef.current.querySelectorAll('[data-kinetic-card]');
-    const card = cards[index] as HTMLElement;
-    if (!card) return;
-
-    const containerWidth = dialRef.current.clientWidth;
-    const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-    const targetScrollPos = cardCenter - containerWidth / 2;
-
-    // Set the target — the update loop will smoothly lerp toward it
-    velocity.current = 0;
-    targetCenter.current = targetScrollPos;
-  };
-
-  const handleViewProduct = (productId: number) => {
-    router.push(`/products/${productId}`);
-  };
+  useEffect(() => {
+    return virtualIndex.on("change", (v) => { setActiveIndex(Math.round(v)); });
+  }, [virtualIndex]);
 
   return (
     <div className={styles.kineticDialWrapper}>
-        <div 
-          className={styles.kineticDialContainer} 
-          ref={dialRef}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-        <div 
-          className={styles.virtualTrack} 
-          style={{ 
-            width: (products.length + 1) * STEP - GAP,
-            height: '100%',
-            position: 'relative',
-            flexShrink: 0
-          }}
-        >
-          {products.slice(visibleRange.start, visibleRange.end).map((product) => (
-            <div 
-              key={product.id}
-              data-index={products.indexOf(product)}
-              style={{
-                position: 'absolute',
-                left: products.indexOf(product) * STEP,
-                top: 0,
-                width: CARD_WIDTH
-              }}
-            >
-              <ProductCard 
-                product={product} 
-                addToCart={addToCart} 
-                onOpen3D={(p) => setSelected3D(p)}
-                onClick={() => handleCardClick(products.indexOf(product))}
-                onViewProduct={() => handleViewProduct(product.id)}
-              />
-            </div>
-          ))}
-
-          {/* VIEW ALL CARD */}
-          {visibleRange.end >= products.length && (
-            <div 
-              style={{
-                position: 'absolute',
-                left: products.length * STEP,
-                top: 0,
-                width: CARD_WIDTH
-              }}
-              data-index={products.length}
-              data-kinetic-card
-              className={styles.viewAllCard}
-              onClick={() => router.push(`/products?category=${products[0].category}`)}
-            >
-              <div className={styles.viewAllContent}>
-                <div className={styles.viewAllIcon}>📁+</div>
-                <h3 className={styles.viewAllText}>VIEW ALL</h3>
-                <p className={styles.viewAllSub}>{products[0].category.toUpperCase()}</p>
-                <div className={styles.viewAllArrow}>⟶</div>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className={styles.dialSpacer}></div>
+      <div className={styles.watermarkContainer}>
+        <h2 className={styles.bgWatermark}>LEMURIA</h2>
       </div>
 
+      <motion.div 
+        className={styles.kineticDialContainer}
+        drag="x"
+        style={{ x: xSpring }}
+        dragElastic={0.1}
+        dragConstraints={{ left: -(allItems.length - 1) * VISUAL_STEP, right: 0 }}
+        dragTransition={{
+          power: 0.15,
+          timeConstant: 250,
+          modifyTarget: (target) => Math.round(target / VISUAL_STEP) * VISUAL_STEP
+        }}
+        onPointerDown={() => { lastInteraction.current = Date.now(); x.stop(); }}
+      >
+        {allItems.map((item, idx) => (
+          <ChronometerItem
+            key={item.id === -1 ? 'view-all' : item.id}
+            item={item}
+            idx={idx}
+            virtualIndex={virtualIndex}
+            VISUAL_STEP={VISUAL_STEP}
+            products={products}
+            addToCart={addToCart}
+            onOpen3D={(p: Product) => setSelected3D(p)}
+            onViewProduct={(id: number) => router.push(`/products/${id}`)}
+            activeIndex={activeIndex}
+            isMobile={isMobile}
+          />
+        ))}
+      </motion.div>
+
       {selected3D && (
-        <CinematicViewer 
-          src={selected3D.model3d!} 
-          name={selected3D.name} 
+        <CinematicViewer
+          src={selected3D.model3d!}
+          name={selected3D.name}
           image={selected3D.image}
-          onClose={() => setSelected3D(null)}
           modelRotation={selected3D.modelRotation}
           modelRotationX={selected3D.modelRotationX}
           modelRotationZ={selected3D.modelRotationZ}
+          onClose={() => setSelected3D(null)}
         />
       )}
     </div>
@@ -583,23 +379,13 @@ const Dial = ({ products }: { products: Product[] }) => {
 };
 
 const Collection = ({ products }: { products: Product[] }) => {
-  const categories = React.useMemo(() => {
-    return Array.from(new Set(products.map(p => p.category)));
-  }, [products]);
+  const router = useRouter();
+  const categories = useMemo(() => Array.from(new Set(products.map(p => p.category))), [products]);
 
   return (
     <section id="collection" className={styles.collection}>
       <div className={styles.bgContainer}>
-        <Image 
-          src="/images/landscape_bg.jpg" 
-          alt="" 
-          fill 
-          className={styles.bgImage} 
-          priority={false}
-          loading="lazy" 
-          sizes="100vw"
-          quality={70}
-        />
+        <Image src="/images/landscape_bg.jpg" alt="" fill className={styles.bgImage} priority={false} />
       </div>
       <div className={styles.kineticAura}></div>
       <div className={styles.container}>
@@ -610,17 +396,18 @@ const Collection = ({ products }: { products: Product[] }) => {
           return (
             <div key={category} className={styles.categorySection}>
               <div className={styles.categoryHeader}>
-                <div className={styles.headerLabel}>GALLERY SELECTION</div>
-                <h2 className={styles.kineticTitle}>{category.toUpperCase()}</h2>
+                <div className={styles.categoryHeaderTop}>
+                  <div className={styles.headerInfo}>
+                    <div className={styles.headerLabel}>ARCHIVAL SELECTION</div>
+                    <h2 className={styles.kineticTitle}>{category.toUpperCase()}</h2>
+                  </div>
+                  <button className={styles.categoryViewAllBtn} onClick={() => router.push(`/products?cat=${category}`)}>
+                    EXPLORE <span className={styles.smallArrow}>⟶</span>
+                  </button>
+                </div>
                 <div className={styles.kineticLine}></div>
               </div>
               <Dial products={categoryProducts as Product[]} />
-              
-              <div className={styles.categoryFooter}>
-                <button className={styles.viewAllBtn}>
-                  EXPLORE {category.toUpperCase()} <span className={styles.smallArrow}>⟶</span>
-                </button>
-              </div>
             </div>
           );
         })}

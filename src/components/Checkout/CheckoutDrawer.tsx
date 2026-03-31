@@ -55,13 +55,10 @@ const CheckoutDrawer: React.FC = () => {
     if (cartItems.length > 0) {
       const hasGhost = cartItems.some(i => i.image.includes('localhost'));
       if (hasGhost) {
-        console.log('[Sanctuary] Localhost ghost detected. Healing acquisition metadata...');
         const sanitized = cartItems.map(i => ({
           ...i,
           image: i.image.replace(/http:\/\/localhost:\d+/, '')
         }));
-        // We use the store's hidden update function if it exists, 
-        // but for now, we just ensure the local metadata used in handlePayment is clean.
       }
     }
   }, [cartItems]);

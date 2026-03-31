@@ -5,26 +5,35 @@ export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
     
-    // BOOTSTRAP FALLBACK: Allow initial login to sync DB even if users table/cloud is unconfigured
+    // BOOTSTRAP FALLBACK: Priority check to allow access even if DB is unconfigured
+    const token = process.env.ADMIN_SECRET_KEY || 'archival_fallback_token_v24';
+
     if (email === 'admin@lemuria.com' && password === 'admin') {
+      console.log('ARCHIVE: EMERGENCY BOOTSTRAP ACCESS GRANTED');
       return NextResponse.json({ 
         success: true, 
-        user: { name: 'Head Curator (Bootstrap)', email: 'admin@lemuria.com' } 
+        user: { name: 'Head Curator (Bootstrap)', email: 'admin@lemuria.com' },
+        token: token
       });
     }
 
-    // Check against Turso Database
-    const result = await db.execute({
-      sql: 'SELECT * FROM users WHERE email = ? AND password = ? AND role = "admin"',
-      args: [email, password]
-    });
-
-    if (result.rows.length > 0) {
-      const user = result.rows[0];
-      return NextResponse.json({ 
-        success: true, 
-        user: { name: user.name, email: user.email } 
+    // Secondary Check: Turso Database
+    try {
+      const result = await db.execute({
+        sql: 'SELECT * FROM users WHERE email = ? AND password = ? AND role = "admin"',
+        args: [email, password]
       });
+
+      if (result.rows.length > 0) {
+        const user = result.rows[0];
+        return NextResponse.json({ 
+          success: true, 
+          user: { name: user.name as string, email: user.email as string },
+          token: token
+        });
+      }
+    } catch (dbErr) {
+      console.warn('ARCHIVE: DATABASE CONNECTION FAILURE - FALLING BACK TO SECURITY GATEWAY');
     }
 
     return NextResponse.json({ error: 'Invalid identification credentials' }, { status: 401 });

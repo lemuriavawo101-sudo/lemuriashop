@@ -1,83 +1,100 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getProducts } from '@/lib/data';
+import { createClient } from '@libsql/client';
 
-export async function GET() {
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const limit = parseInt(searchParams.get('limit') || '12');
+  const offset = parseInt(searchParams.get('offset') || '0');
+
   try {
-    const result = await db.execute('SELECT * FROM products');
-    const products = result.rows;
-    const variants = (await db.execute('SELECT * FROM variants')).rows;
-    
-    const enriched = products.map((p: any) => ({
-      ...p,
-      isWeapon: Boolean(p.isWeapon),
-      variants: variants.filter((v: any) => v.productId === p.id)
-    }));
-    
-    return NextResponse.json(enriched);
-  } catch (error: any) {
-    return NextResponse.json({ error: `Heritage Logic Error: ${error.message || 'Failed to fetch products'}` }, { status: 500 });
+    const products = await getProducts(limit, offset);
+    return NextResponse.json(products);
+  } catch (error) {
+    console.error('API Products cache error:', error);
+    return NextResponse.json({ error: 'Failed to fetch heritage batch' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const p = await request.json();
-    
-    const result = await db.execute({
+    const body = await request.json();
+    const { name, category, artifactType, description, isWeapon, image, model3d, rotation, modelRotation, modelRotationX, modelRotationZ, stock, variants, showInCollection } = body;
+
+    const result = await client.execute({
       sql: `INSERT INTO products (name, category, artifactType, description, isWeapon, image, model3d, rotation, modelRotation, modelRotationX, modelRotationZ, stock, showInCollection)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
-      args: [p.name, p.category, p.artifactType, p.description, p.isWeapon ? 1 : 0, p.image, p.model3d, p.rotation || 0, p.modelRotation || 0, p.modelRotationX || 0, p.modelRotationZ || 0, p.stock || 'In Stock', p.showInCollection !== undefined ? (p.showInCollection ? 1 : 0) : 1]
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [name, category, artifactType, description, isWeapon ? 1 : 0, image, model3d || null, rotation || 0, modelRotation || 0, modelRotationX || 0, modelRotationZ || 0, stock || 'In Stock', showInCollection !== false ? 1 : 0]
     });
-    
-    const productId = Number(result.rows[0].id);
-    
-    if (p.variants && p.variants.length > 0) {
-      for (const v of p.variants) {
-        await db.execute({
+
+    const productId = Number(result.lastInsertRowid);
+
+    if (variants && variants.length > 0) {
+      for (const v of variants) {
+        await client.execute({
           sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel) VALUES (?, ?, ?, ?, ?, ?)',
           args: [productId, v.size, v.price, v.old_price, v.stock, v.refillLevel]
         });
       }
     }
-    
-    return NextResponse.json({ ...p, id: productId }, { status: 201 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+
+    return NextResponse.json({ success: true, id: productId });
+  } catch (error: any) {
+    console.error('API POST Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const p = await request.json();
-    
-    await db.execute({
-      sql: `UPDATE products SET name=?, category=?, artifactType=?, description=?, isWeapon=?, image=?, model3d=?, rotation=?, modelRotation=?, modelRotationX=?, modelRotationZ=?, stock=?, showInCollection=?
+    const body = await request.json();
+    const { id, name, category, artifactType, description, isWeapon, image, model3d, rotation, modelRotation, modelRotationX, modelRotationZ, stock, variants, showInCollection } = body;
+
+    if (!id) return NextResponse.json({ error: 'Missing artifact ID' }, { status: 400 });
+
+    await client.execute({
+      sql: `UPDATE products SET 
+              name = ?, category = ?, artifactType = ?, description = ?, isWeapon = ?, 
+              image = ?, model3d = ?, rotation = ?, modelRotation = ?, 
+              modelRotationX = ?, modelRotationZ = ?, stock = ?, showInCollection = ?
             WHERE id = ?`,
-      args: [p.name, p.category, p.artifactType, p.description, p.isWeapon ? 1 : 0, p.image, p.model3d, p.rotation, p.modelRotation, p.modelRotationX, p.modelRotationZ, p.stock, p.showInCollection ? 1 : 0, p.id]
+      args: [name, category, artifactType, description, isWeapon ? 1 : 0, image, model3d || null, rotation || 0, modelRotation || 0, modelRotationX || 0, modelRotationZ || 0, stock || 'In Stock', showInCollection !== false ? 1 : 0, id]
     });
-    
-    // Update variants: simplify by delete and re-insert
-    await db.execute({ sql: 'DELETE FROM variants WHERE productId = ?', args: [p.id] });
-    for (const v of p.variants) {
-      await db.execute({
-        sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel) VALUES (?, ?, ?, ?, ?, ?)',
-        args: [p.id, v.size, v.price, v.old_price, v.stock, v.refillLevel]
-      });
+
+    // Update variants (rebuild approach)
+    if (variants && variants.length > 0) {
+      await client.execute({ sql: 'DELETE FROM variants WHERE productId = ?', args: [id] });
+      for (const v of variants) {
+        await client.execute({
+          sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel) VALUES (?, ?, ?, ?, ?, ?)',
+          args: [id, v.size, v.price, v.old_price, v.stock, v.refillLevel]
+        });
+      }
     }
-    
-    return NextResponse.json(p);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('API PUT Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
     const { id } = await request.json();
-    await db.execute({ sql: 'DELETE FROM products WHERE id = ?', args: [id] });
-    return NextResponse.json({ message: 'Product deleted' });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+    if (!id) return NextResponse.json({ error: 'Missing artifact ID' }, { status: 400 });
+
+    await client.execute({ sql: 'DELETE FROM variants WHERE productId = ?', args: [id] });
+    await client.execute({ sql: 'DELETE FROM products WHERE id = ?', args: [id] });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('API DELETE Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
