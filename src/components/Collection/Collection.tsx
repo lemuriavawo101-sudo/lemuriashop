@@ -188,7 +188,7 @@ const ChronometerItem = memo(({ item, idx, virtualIndex, VISUAL_STEP, products, 
   );
 
   // Advanced Depth-Z (Pop-out effect)
-  const zIndexVal = useTransform(virtualIndex, (v) => Math.round(100 - Math.abs(idx - v) * 20));
+  const zIndexVal = useTransform(virtualIndex, (v: number) => Math.round(100 - Math.abs(idx - v) * 20));
 
   const isVisible = Math.abs(idx - activeIndex) <= 4;
   if (!isVisible) return <div style={{ flex: `0 0 ${VISUAL_STEP}px` }} />;
