@@ -26,6 +26,7 @@ import ScrollToTop from "@/components/ScrollToTop/ScrollToTop";
 import NextTopLoader from 'nextjs-toploader';
 
 import CinematicShowcase from "@/components/Showcase/CinematicShowcase";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export default function RootLayout({
   children,
@@ -85,6 +86,7 @@ export default function RootLayout({
             </ToastProvider>
           </PerformanceProvider>
         </ThemeProvider>
+        <GoogleAnalytics gaId="G-ME9JC5M0FH" />
       </body>
     </html>
   );

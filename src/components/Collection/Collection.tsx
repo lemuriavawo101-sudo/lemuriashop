@@ -22,6 +22,7 @@ import { useToast } from '@/context/ToastContext';
 import CinematicViewer from '../ModelViewer/CinematicViewer';
 import { usePerformance } from '@/context/PerformanceContext';
 import { Heart, Share2, Box, Eye } from 'lucide-react';
+import { trackViewerOpen } from '@/lib/analytics';
 
 interface Variant {
   size: string;
@@ -355,7 +356,10 @@ const Dial = ({ products }: { products: Product[] }) => {
             VISUAL_STEP={VISUAL_STEP}
             products={products}
             addToCart={addToCart}
-            onOpen3D={(p: Product) => setSelected3D(p)}
+            onOpen3D={(p: Product) => {
+              trackViewerOpen(p.name);
+              setSelected3D(p);
+            }}
             onViewProduct={(id: number) => router.push(`/products/${id}`)}
             activeIndex={activeIndex}
             isMobile={isMobile}
