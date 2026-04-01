@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getProducts } from '@/lib/data';
 import { createClient } from '@libsql/client';
+import { revalidatePath } from 'next/cache';
 
 const client = createClient({
   url: process.env.TURSO_DATABASE_URL!,
@@ -43,6 +44,9 @@ export async function POST(request: Request) {
       }
     }
 
+    revalidatePath('/');
+    revalidatePath('/products');
+    
     return NextResponse.json({ success: true, id: productId });
   } catch (error: any) {
     console.error('API POST Error:', error);
@@ -76,7 +80,10 @@ export async function PUT(request: Request) {
         });
       }
     }
-
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath(`/products/${id}`);
+    
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('API PUT Error:', error);
@@ -92,6 +99,10 @@ export async function DELETE(request: Request) {
     await client.execute({ sql: 'DELETE FROM variants WHERE productId = ?', args: [id] });
     await client.execute({ sql: 'DELETE FROM products WHERE id = ?', args: [id] });
 
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath(`/products/${id}`);
+    
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('API DELETE Error:', error);

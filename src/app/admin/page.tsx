@@ -1145,25 +1145,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleCloudSync = async () => {
-    if (!confirm('This will synchronize your local heritage records with the Turso Cloud Database. Proceed?')) return;
-    
-    setLoading(true);
-    try {
-      const resp = await fetch('/api/admin/db-sync', { method: 'POST' });
-      if (resp.ok) {
-        alert('Heritage Records Synchronized with Turso Cloud.');
-      } else {
-        const data = await resp.json();
-        throw new Error(data.error || 'Sync failed');
-      }
-    } catch (e: any) {
-      alert('Sync Failure: ' + e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleBackfill = async () => {
     if (!confirm('This will associate orphaned historical orders to registered practitioner accounts where names match. Proceed?')) return;
     
@@ -1340,22 +1321,6 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div className={styles.maintenanceCard} style={{ marginTop: '20px', border: '1px solid rgba(191, 149, 63, 0.4)' }}>
-              <div className={styles.maintenanceLabel}>CLOUD INFRASTRUCTURE</div>
-              <h1 className={styles.maintenanceTitle}>Turso Cloud Synchronization</h1>
-              <p className={styles.maintenanceDesc}>
-                Synchronize your local museum records with the Turso Real-Time Cloud Database. 
-                This will establish your cloud persistence and enable global accessibility for your collection.
-              </p>
-              <button 
-                className={styles.seedBtn} 
-                onClick={handleCloudSync}
-                disabled={loading}
-                style={{ background: '#BF953F', color: '#000' }}
-              >
-                {loading ? 'SYNCHRONIZING CLOUD...' : 'ESTABLISH CLOUD PERSISTENCE'}
-              </button>
-            </div>
             
             <style jsx>{`
               .${styles.maintenanceCard} {

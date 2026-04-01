@@ -32,30 +32,41 @@ export async function POST(request: Request) {
     const orphansResult = await db.execute('SELECT id, customer FROM orders WHERE userId IS NULL OR userId = ""');
     const orphans = orphansResult.rows;
 
-    let updateCount = 0;
+    if (orphans.length === 0) {
+      return NextResponse.json({ success: true, updated: 0, message: "No orphaned orders to cleanse." });
+    }
+
+    const updates: any[] = [];
+    const matchedOrders: string[] = [];
 
     for (const order of orphans) {
       if (!order.customer) continue;
 
-      const orderCustomerName = String(order.customer).toLowerCase().trim();
+      const orderCustomerRaw = String(order.customer).trim();
+      const orderCustomerLow = orderCustomerRaw.toLowerCase();
       
-      // Find matching user
+      // Find matching user (Try exact name first, then email match)
       const matchingUser = users.find((u: any) => {
         const uName = u.name ? String(u.name).toLowerCase().trim() : '';
         const uEmail = u.email ? String(u.email).toLowerCase().trim() : '';
-        return uName === orderCustomerName || uEmail === orderCustomerName;
+        return uName === orderCustomerLow || uEmail === orderCustomerLow;
       });
 
       if (matchingUser) {
-        await db.execute({
+        updates.push({
           sql: 'UPDATE orders SET userId = ? WHERE id = ?',
           args: [matchingUser.id, order.id]
         });
-        updateCount++;
+        matchedOrders.push(String(order.id));
       }
     }
 
-    return NextResponse.json({ success: true, updated: updateCount });
+    if (updates.length > 0) {
+      // Execute all updates in a single batch for high performance and atomicity
+      await db.batch(updates, "write");
+    }
+
+    return NextResponse.json({ success: true, updated: updates.length });
 
   } catch (error: any) {
     console.error("Backfill error:", error);

@@ -18,5 +18,14 @@ export const db = {
       _client = createClient({ url, authToken });
     }
     return await _client.execute(stmt);
+  },
+  batch: async (stmts: any[], mode?: any) => {
+    if (!_client) {
+      if (!url || !authToken) {
+        throw new Error('TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be configured in Vercel settings.');
+      }
+      _client = createClient({ url, authToken });
+    }
+    return await _client.batch(stmts, mode);
   }
 };
