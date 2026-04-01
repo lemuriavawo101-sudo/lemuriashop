@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import styles from './admin.module.css';
 import dynamic from 'next/dynamic';
 
@@ -232,7 +232,7 @@ const ExportControls = ({ data, type, filename }: { data: any[], type: 'inventor
   );
 };
 
-const CategoryView = ({ products, onUpdate }: { products: Product[], onUpdate: () => void }) => {
+const CategoryView = memo(({ products, onUpdate }: { products: Product[], onUpdate: () => void }) => {
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
 
@@ -301,9 +301,9 @@ const CategoryView = ({ products, onUpdate }: { products: Product[], onUpdate: (
       </div>
     </div>
   );
-};
+});
 
-const InventoryView = ({ products, onAdd, onEdit, onDelete, onStockUpdate, onToggleVisibility }: any) => {
+const InventoryView = memo(({ products, onAdd, onEdit, onDelete, onStockUpdate, onToggleVisibility }: any) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredProducts = useMemo(() => {
@@ -340,23 +340,24 @@ const InventoryView = ({ products, onAdd, onEdit, onDelete, onStockUpdate, onTog
               <div className={styles.imageThumb}>
                 <img src={p.image} alt={p.name} className={styles.productImage} />
               </div>
-              <div className={styles.details}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <p>{p.category} • {p.artifactType} • {p.variants.length} Variants</p>
-                  {p.variants.some(v => v.stock <= (v.refillLevel || 0)) && (
-                    <span className={styles.refillBadge}>⚠️ REFILL NEEDED</span>
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <h3 className={styles.productNameHeader}>{p.name}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <p style={{ margin: 0, opacity: 0.8 }}>{p.category} • {p.artifactType} • {p.variants.length} Variants</p>
+                    {p.variants.some(v => v.stock <= (v.refillLevel || 0)) && (
+                      <span className={styles.refillBadge}>⚠️ REFILL NEEDED</span>
+                    )}
+                  </div>
                 </div>
                 <div className={styles.priceOverview}>
-                  ₹{p.variants[0]?.price.toLocaleString()}
+                  <span className={styles.priceTag}>₹{p.variants[0]?.price.toLocaleString()}</span>
                   {p.model3d && <span className={styles.modelBadge}>3D Model Attached</span>}
-                  <span className={`${styles.statusBadge} ${p.stock === 'In Stock' ? styles.statusDelivered : styles.statusShipped}`} style={{ marginLeft: '10px' }}>
+                  <span className={`${styles.statusBadge} ${p.stock === 'In Stock' ? styles.statusDelivered : styles.statusShipped}`}>
                     {p.stock === 'In Stock' ? 'IN STOCK' : 'OUT OF STOCK'}
                   </span>
                   <span 
                     className={styles.statusBadge} 
                     style={{ 
-                      marginLeft: '10px', 
                       background: p.showInCollection ? 'rgba(191, 149, 63, 0.15)' : 'rgba(255,255,255,0.05)',
                       color: p.showInCollection ? '#BF953F' : '#666',
                       border: p.showInCollection ? '1px solid #BF953F' : '1px solid #444'
@@ -365,7 +366,6 @@ const InventoryView = ({ products, onAdd, onEdit, onDelete, onStockUpdate, onTog
                     {p.showInCollection ? '🌟 IN COLLECTION' : '📁 HIDDEN'}
                   </span>
                 </div>
-              </div>
             </div>
             <div className={styles.actions}>
               <button 
@@ -389,10 +389,10 @@ const InventoryView = ({ products, onAdd, onEdit, onDelete, onStockUpdate, onTog
       </div>
     </div>
   );
-};
+});
 
 // ... OrdersView and UsersView remain similar or can be polished if needed ...
-const OrdersView = ({ orders, onStatusUpdate, onDelete }: any) => (
+const OrdersView = memo(({ orders, onStatusUpdate, onDelete }: any) => (
   <div className={styles.view}>
     <div className={styles.header}>
       <h1 className={styles.title}>ORDER TRACKING</h1>
@@ -468,9 +468,9 @@ const OrdersView = ({ orders, onStatusUpdate, onDelete }: any) => (
       </table>
     </div>
   </div>
-);
+));
 
-const UsersView = ({ users }: { users: User[] }) => (
+const UsersView = memo(({ users }: { users: User[] }) => (
   <div className={styles.view}>
     <div className={styles.header}>
       <h1 className={styles.title}>USER MANAGEMENT</h1>
@@ -505,9 +505,9 @@ const UsersView = ({ users }: { users: User[] }) => (
       </table>
     </div>
   </div>
-);
+));
 
-const LeadsView = ({ users }: { users: User[] }) => (
+const LeadsView = memo(({ users }: { users: User[] }) => (
   <div className={styles.view}>
     <div className={styles.header}>
       <h1 className={styles.title}>PRACTITIONER LEADS</h1>
@@ -538,9 +538,9 @@ const LeadsView = ({ users }: { users: User[] }) => (
       )}
     </div>
   </div>
-);
+));
 
-const EnquiriesView = ({ enquiries, onStatusUpdate, onDelete }: { enquiries: Enquiry[], onStatusUpdate: (id: string, s: string) => void, onDelete: (id: string) => void }) => (
+const EnquiriesView = memo(({ enquiries, onStatusUpdate, onDelete }: { enquiries: Enquiry[], onStatusUpdate: (id: string, s: string) => void, onDelete: (id: string) => void }) => (
   <div className={styles.view}>
     <div className={styles.header}>
       <h1 className={styles.title}>INQUIRY LOG</h1>
@@ -613,9 +613,9 @@ const EnquiriesView = ({ enquiries, onStatusUpdate, onDelete }: { enquiries: Enq
       )}
     </div>
   </div>
-);
+));
 
-const DealOfDayView = ({ products, dealIds, setDealIds }: { products: Product[], dealIds: number[], setDealIds: (ids: number[]) => void }) => {
+const DealOfDayView = memo(({ products, dealIds, setDealIds }: { products: Product[], dealIds: number[], setDealIds: (ids: number[]) => void }) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -719,9 +719,9 @@ const DealOfDayView = ({ products, dealIds, setDealIds }: { products: Product[],
       </div>
     </div>
   );
-};
+});
 
-const ShowcaseView = ({ products, showcaseIds, setShowcaseIds }: { products: Product[], showcaseIds: number[], setShowcaseIds: (ids: number[]) => void }) => {
+const ShowcaseView = memo(({ products, showcaseIds, setShowcaseIds }: { products: Product[], showcaseIds: number[], setShowcaseIds: (ids: number[]) => void }) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -815,7 +815,7 @@ const ShowcaseView = ({ products, showcaseIds, setShowcaseIds }: { products: Pro
       </div>
     </div>
   );
-};
+});
 
 export default function AdminPage() {
   const [activeView, setActiveView] = useState<'inventory' | 'orders' | 'users' | 'enquiries' | 'leads' | 'deals' | 'showcase' | 'categories' | 'maintenance'>('inventory');

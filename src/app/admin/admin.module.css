@@ -168,6 +168,8 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  content-visibility: auto; /* Optimization for large lists */
+  contain-intrinsic-size: 1px 150px;
 }
 
 .productItem {
@@ -238,9 +240,45 @@
 }
 
 .priceOverview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-top: 8px;
+}
+
+.priceTag {
   font-weight: 900;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
+  color: #BF953F;
+}
+
+.productNameHeader {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.modelBadge {
+  background: rgba(191, 149, 63, 0.1);
+  color: #BF953F;
+  border: 1px solid rgba(191, 149, 63, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.refillBadge {
+  background: rgba(255, 77, 77, 0.1);
+  color: #ff4d4d;
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
 }
 
 .noResults {
