@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, memo } from 'react';
+import React, { useState, useEffect, useMemo, memo, useRef } from 'react';
 import styles from './admin.module.css';
 import dynamic from 'next/dynamic';
 
@@ -823,6 +823,9 @@ export default function AdminPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(false);
+  // File Upload Refs
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const modelInputRef = useRef<HTMLInputElement>(null);
   const [loginLoading, setLoginLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -1529,8 +1532,20 @@ export default function AdminPage() {
                     onChange={e => setFormData({...formData, image: e.target.value})} 
                   />
                   <div className={styles.fileInputWrapper}>
-                    <button type="button" className={styles.uploadBtn}>Upload Image</button>
-                    <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'image')} />
+                    <button 
+                      type="button" 
+                      className={styles.uploadBtn}
+                      onClick={() => imageInputRef.current?.click()}
+                    >
+                      Upload Image
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={imageInputRef}
+                      accept="image/*" 
+                      style={{ display: 'none' }}
+                      onChange={e => handleFileUpload(e, 'image')} 
+                    />
                   </div>
                 </div>
                 {formData.image && (
@@ -1550,8 +1565,20 @@ export default function AdminPage() {
                     onChange={e => setFormData({...formData, model3d: e.target.value})} 
                   />
                   <div className={styles.fileInputWrapper}>
-                    <button type="button" className={styles.uploadBtn}>Upload 3D Model</button>
-                    <input type="file" accept=".glb" onChange={e => handleFileUpload(e, 'model3d')} />
+                    <button 
+                      type="button" 
+                      className={styles.uploadBtn}
+                      onClick={() => modelInputRef.current?.click()}
+                    >
+                      Upload 3D Model
+                    </button>
+                    <input 
+                      type="file"
+                      ref={modelInputRef}
+                      accept=".glb" 
+                      style={{ display: 'none' }}
+                      onChange={e => handleFileUpload(e, 'model3d')} 
+                    />
                   </div>
                 </div>
               </div>
