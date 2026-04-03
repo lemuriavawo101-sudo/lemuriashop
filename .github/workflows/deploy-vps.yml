@@ -1,0 +1,32 @@
+name: VPS Deployment (CloudPanel)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        password: ${{ secrets.VPS_PASSWORD }}
+        port: 22
+        script: |
+          cd htdocs/shop.lemuriavawo.org
+          git pull origin main
+          export PATH=$PATH:$HOME/bin:/usr/local/bin
+          npm install
+          npm run build
+          # If using CloudPanel's integrated Node.js, a restart is often handled by file change or via a specific command
+          # We will touch a specific file or restart the systemd service if available
+          # For CloudPanel, usually:
+          if [ -d ".next" ]; then
+            echo "Deployment successful. Next.js build complete."
+          fi

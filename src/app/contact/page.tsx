@@ -44,10 +44,16 @@ function ContactPageInner() {
     setSending(true);
     
     try {
+      const fd = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null) {
+          fd.append(key, value as any);
+        }
+      });
+
       const resp = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: fd
       });
       
       if (resp.ok) {

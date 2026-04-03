@@ -35,8 +35,10 @@ const ProductGridCard = ({ product }: { product: Product }) => {
   const { showToast } = useToast();
   const { isLowPower, webGLSupported } = usePerformance();
   const [selected3D, setSelected3D] = useState<Product | null>(null);
-  const variant = product.variants[0];
+  const variant = product.variants?.[0];
   const itemInWishlist = isInWishlist(product.id);
+  
+  if (!variant) return null;
   
   const show3D = webGLSupported && !isLowPower;
 
@@ -60,11 +62,18 @@ const ProductGridCard = ({ product }: { product: Product }) => {
       showToast("Link copied to clipboard!");
     }
   };
+  const mainImage = product.image || product.variants.find(v => v.image)?.image || '/placeholder-artifact.png';
+  const hasVariantVisuals = product.variants.some(v => v.image);
   
   return (
     <>
       <Link href={`/products/${product.id}`} className={styles.gridCard}>
         <div className={styles.cardImage}>
+          {hasVariantVisuals && (
+            <div className={styles.variantIndicator} title="Multiple visual variants available">
+              ✨
+            </div>
+          )}
           <div 
             className={styles.cardImageContainer}
             style={{ 
@@ -72,7 +81,7 @@ const ProductGridCard = ({ product }: { product: Product }) => {
             }}
           >
             <Image 
-              src={product.image} 
+              src={mainImage} 
               alt={product.name} 
               fill 
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
@@ -136,7 +145,7 @@ const ProductGridCard = ({ product }: { product: Product }) => {
             )}
           </div>
           <div className={styles.cardFooter}>
-            <div className={styles.cardPrice}>₹{variant.price.toLocaleString()}</div>
+            <div className={styles.cardPrice}>₹{(variant?.price ?? 0).toLocaleString()}</div>
             <button 
               className="btnPremium btnPremiumGold"
               onClick={(e) => {
@@ -145,7 +154,7 @@ const ProductGridCard = ({ product }: { product: Product }) => {
                 addToCart(product, variant);
               }}
             >
-              Acquire
+              Buy
             </button>
           </div>
         </div>

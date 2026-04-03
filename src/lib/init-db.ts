@@ -19,7 +19,8 @@ export async function initializeDatabase() {
       modelRotation REAL,
       modelRotationX REAL,
       modelRotationZ REAL,
-      stock TEXT
+      stock TEXT,
+      showInCollection BOOLEAN DEFAULT 1
     )`,
     `CREATE TABLE IF NOT EXISTS variants (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,6 +30,8 @@ export async function initializeDatabase() {
       old_price REAL,
       stock INTEGER,
       refillLevel INTEGER,
+      image TEXT,
+      model3d TEXT,
       FOREIGN KEY(productId) REFERENCES products(id) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS reviews (
@@ -52,7 +55,12 @@ export async function initializeDatabase() {
       status TEXT,
       date TEXT,
       items TEXT,
-      delivery TEXT
+      delivery TEXT,
+      userId TEXT,
+      subtotal REAL,
+      tax REAL,
+      protectFee REAL,
+      shipping REAL
     )`,
     `CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -72,12 +80,49 @@ export async function initializeDatabase() {
       measurements TEXT,
       materials TEXT,
       status TEXT DEFAULT 'New',
-      date TEXT
+      date TEXT,
+      sampleImage TEXT
     )`
   ];
 
   for (const statement of schema) {
     await db.execute(statement);
+  }
+
+  // MIGRATION: Add image and model3d to variants if they don't exist
+  try {
+    const tableInfo: any = await db.execute('PRAGMA table_info(variants)');
+    const columns = tableInfo.rows.map((r: any) => r.name);
+    if (!columns.includes('image')) {
+      await db.execute('ALTER TABLE variants ADD COLUMN image TEXT');
+    }
+    if (!columns.includes('model3d')) {
+      await db.execute('ALTER TABLE variants ADD COLUMN model3d TEXT');
+    }
+  } catch (e) {
+    console.warn('Migration: Variants columns already exist or table missing');
+  }
+
+  // MIGRATION: Add sampleImage to enquiries if it doesn't exist
+  try {
+    const tableInfo: any = await db.execute('PRAGMA table_info(enquiries)');
+    const columns = tableInfo.rows.map((r: any) => r.name);
+    if (!columns.includes('sampleImage')) {
+      await db.execute('ALTER TABLE enquiries ADD COLUMN sampleImage TEXT');
+    }
+  } catch (e) {
+    console.warn('Migration: Enquiries column already exists or table missing');
+  }
+
+  // MIGRATION: Add showInCollection to products if it doesn't exist
+  try {
+    const tableInfo: any = await db.execute('PRAGMA table_info(products)');
+    const columns = tableInfo.rows.map((r: any) => r.name);
+    if (!columns.includes('showInCollection')) {
+      await db.execute('ALTER TABLE products ADD COLUMN showInCollection BOOLEAN DEFAULT 1');
+    }
+  } catch (e) {
+    console.warn('Migration: Products showInCollection column already exists or table missing');
   }
   
   console.log('Schema synchronized. Beginning Data Migration...');
@@ -107,10 +152,10 @@ export async function migrateJsonToDb() {
 
     // Clear old variants for this product
     await db.execute({ sql: 'DELETE FROM variants WHERE productId = ?', args: [p.id] });
-    for (const v of p.variants) {
+    for (const v of p.variants || []) {
       await db.execute({
-        sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel) VALUES (?, ?, ?, ?, ?, ?)',
-        args: [p.id, v.size, v.price, v.old_price, v.stock, v.refillLevel]
+        sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel, image, model3d) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [p.id, v.size, v.price, v.old_price, v.stock, v.refillLevel, v.image || null, v.model3d || null]
       });
     }
   }

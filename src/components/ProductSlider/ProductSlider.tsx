@@ -151,7 +151,9 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
   if (products.length === 0) return null;
 
   const product = products[currentIndex];
+  if (!product || !product.variants || product.variants.length === 0) return null;
   const selectedVariant = product.variants[selectedVariantIndex] || product.variants[0];
+  if (!selectedVariant) return null;
   const isProductCompletelyOutOfStock = product.stock === 'Out of Stock' || (product.variants && product.variants.every(v => v.stock <= 0));
   const isCurrentVariantOutOfStock = product.stock === 'Out of Stock' || selectedVariant.stock <= 0;
   const itemInWishlist = isInWishlist(product?.id);
@@ -269,7 +271,7 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
                 )}
                 <div className={styles.offerBadge}>
                   <span className={styles.offerLabel}>LIMITED OFFER</span>
-                  <span className={styles.offerAmount}>-₹{(selectedVariant.old_price - selectedVariant.price).toLocaleString()}</span>
+                  <span className={styles.offerAmount}>-₹{((selectedVariant?.old_price || 0) - (selectedVariant?.price || 0)).toLocaleString()}</span>
                 </div>
 
                 <div className={styles.actionButtons}>
@@ -366,11 +368,11 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
               <div className={styles.pricing}>
                 <div className={styles.priceGroup}>
                   <div className={styles.priceLabel}>HERITAGE PRICE</div>
-                  <div className={styles.priceValue}>₹{selectedVariant.price.toLocaleString()}</div>
+                  <div className={styles.priceValue}>₹{(selectedVariant?.price ?? 0).toLocaleString()}</div>
                 </div>
                 <div className={styles.oldPriceGroup}>
                   <div className={styles.oldPriceLabel}>ORIGINAL</div>
-                  <div className={styles.oldPriceValue}>₹{selectedVariant.old_price.toLocaleString()}</div>
+                  <div className={styles.oldPriceValue}>₹{(selectedVariant?.old_price ?? 0).toLocaleString()}</div>
                 </div>
               </div>
 
@@ -388,7 +390,7 @@ const ProductSlider = ({ products }: { products: Product[] }) => {
                   }}
                   className={`btnPremium btnPremiumGold ${styles.addToCartBtn}`}
                 >
-                  {isCurrentVariantOutOfStock ? 'OUT OF STOCK' : (isFocused ? 'ACQUIRE ARTIFACT' : 'VIEW PRODUCT')} <span className={styles.arrow}>→</span>
+                  {isCurrentVariantOutOfStock ? 'OUT OF STOCK' : (isFocused ? 'BUY ARTIFACT' : 'VIEW PRODUCT')} <span className={styles.arrow}>→</span>
                 </button>
                 {isFocused && (
                   <button 

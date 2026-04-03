@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo, memo, useRef } from 'react';
 import styles from './admin.module.css';
 import dynamic from 'next/dynamic';
+import { generateInvoice } from '@/lib/invoice-generator';
+import { FiDownload } from 'react-icons/fi';
 
 const CinematicViewer = dynamic(() => import('@/components/ModelViewer/CinematicViewer'), { ssr: false });
 const VisualRotator = dynamic(() => import('@/components/ModelViewer/VisualRotator'), { ssr: false });
@@ -13,6 +15,8 @@ interface ProductVariant {
   old_price: number;
   stock: number;
   refillLevel: number;
+  image?: string;
+  model3d?: string;
 }
 
 interface Product {
@@ -38,6 +42,10 @@ interface Order {
   customer: string;
   items: any[];
   total: number;
+  subtotal?: number;
+  tax?: number;
+  protectFee?: number;
+  shipping?: number;
   status: 'Pending' | 'Shipped' | 'Delivered';
   date: string;
   delivery?: {
@@ -66,6 +74,7 @@ interface Enquiry {
   materials?: string;
   status: string;
   date: string;
+  sampleImage?: string;
 }
 
 const CATEGORIES = [
@@ -350,7 +359,7 @@ const InventoryView = memo(({ products, onAdd, onEdit, onDelete, onStockUpdate, 
                   </div>
                 </div>
                 <div className={styles.priceOverview}>
-                  <span className={styles.priceTag}>₹{p.variants[0]?.price.toLocaleString()}</span>
+                  <span className={styles.priceTag}>₹{(p.variants[0]?.price ?? 0).toLocaleString()}</span>
                   {p.model3d && <span className={styles.modelBadge}>3D Model Attached</span>}
                   <span className={`${styles.statusBadge} ${p.stock === 'In Stock' ? styles.statusDelivered : styles.statusShipped}`}>
                     {p.stock === 'In Stock' ? 'IN STOCK' : 'OUT OF STOCK'}
@@ -403,6 +412,7 @@ const OrdersView = memo(({ orders, onStatusUpdate, onDelete }: any) => (
         <thead>
           <tr>
             <th>Order ID</th>
+            <th>Invoice</th>
             <th>Customer</th>
             <th>Items</th>
             <th>Total</th>
@@ -417,6 +427,16 @@ const OrdersView = memo(({ orders, onStatusUpdate, onDelete }: any) => (
           {orders.map((o: Order) => (
             <tr key={o.id} className={styles.orderRow}>
               <td className={styles.orderId}>{o.id}</td>
+              <td className={styles.downloadCell}>
+                <button 
+                  className={styles.downloadBtn} 
+                  onClick={() => generateInvoice(o as any)}
+                  title="Download Invoice"
+                  style={{ background: 'rgba(191,149,63,0.1)', color: '#BF953F', border: '1px solid #BF953F', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', fontWeight: 800 }}
+                >
+                  <FiDownload size={14} /> PDF
+                </button>
+              </td>
               <td className={styles.customer}>{o.customer}</td>
               <td className={styles.items}>
                 {Array.isArray(o.items) 
@@ -540,6 +560,104 @@ const LeadsView = memo(({ users }: { users: User[] }) => (
   </div>
 ));
 
+const generateEnquiryPDF = async (enq: Enquiry) => {
+  try {
+    const { default: jsPDF } = await import('jspdf');
+    const doc = new jsPDF('p', 'pt', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Header
+    doc.setFillColor(17, 17, 17);
+    doc.rect(0, 0, pageWidth, 120, 'F');
+    
+    doc.setTextColor(191, 149, 63);
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.text('LEMURIA HERITAGE', 40, 60);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('CUSTOM ARTIFACT REQUEST', 40, 85);
+    doc.text(`REFERENCE: ${enq.id}`, 40, 105);
+    
+    // Content
+    doc.setTextColor(40, 40, 40);
+    let y = 160;
+    
+    const drawField = (label: string, value: string) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${label}:`, 40, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value || 'N/A', 150, y);
+      y += 25;
+    };
+    
+    drawField('Customer Name', enq.name);
+    drawField('Email Archive', enq.email);
+    drawField('Contact Line', enq.phone || 'Not Provided');
+    drawField('Request Date', new Date(enq.date).toLocaleString());
+    drawField('Subject', enq.subject.toUpperCase());
+    
+    y += 10;
+    doc.setDrawColor(191, 149, 63);
+    doc.line(40, y, pageWidth - 40, y);
+    y += 30;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('TECHNICAL SPECIFICATIONS:', 40, y);
+    y += 25;
+    
+    drawField('Measurements', enq.measurements || 'Standard');
+    drawField('Materials', enq.materials || 'Traditional');
+    
+    y += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('MESSAGE / REQUIREMENTS:', 40, y);
+    y += 20;
+    doc.setFont('helvetica', 'normal');
+    const splitMessage = doc.splitTextToSize(enq.message, pageWidth - 80);
+    doc.text(splitMessage, 40, y);
+    y += splitMessage.length * 15 + 40;
+    
+    // Reference Image
+    if (enq.sampleImage) {
+      try {
+        doc.setFont('helvetica', 'bold');
+        doc.text('REFERENCE ARCHIVE:', 40, y);
+        y += 20;
+        
+        // We load the image as base64 to ensure it's embedded properly
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'Anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = enq.sampleImage!;
+        });
+        
+        const imgWidth = 300;
+        const imgHeight = (img.height * imgWidth) / img.width;
+        
+        // If image doesn't fit on this page, add a new page
+        if (y + imgHeight > doc.internal.pageSize.getHeight() - 40) {
+          doc.addPage();
+          y = 40;
+        }
+        
+        doc.addImage(img, 'JPEG', 40, y, imgWidth, imgHeight);
+      } catch (err) {
+        console.error('Failed to embed image in PDF:', err);
+        doc.text('[Image Reference Could Not Be Embedded]', 40, y);
+      }
+    }
+    
+    doc.save(`Request_${enq.name.replace(/\s+/g, '_')}_${enq.id}.pdf`);
+  } catch (e) {
+    console.error('PDF Generation Failed:', e);
+    alert('Failed to generate request PDF.');
+  }
+};
+
 const EnquiriesView = memo(({ enquiries, onStatusUpdate, onDelete }: { enquiries: Enquiry[], onStatusUpdate: (id: string, s: string) => void, onDelete: (id: string) => void }) => (
   <div className={styles.view}>
     <div className={styles.header}>
@@ -584,6 +702,16 @@ const EnquiriesView = memo(({ enquiries, onStatusUpdate, onDelete }: { enquiries
             </div>
           )}
 
+          {enq.sampleImage && (
+            <div className={styles.enquiryImagePreview} style={{ marginTop: '15px', borderRadius: '4px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <img 
+                src={enq.sampleImage} 
+                alt="Reference" 
+                style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '200px', objectFit: 'cover' }} 
+              />
+            </div>
+          )}
+
           <div className={styles.enquiryFooter}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <select 
@@ -598,13 +726,25 @@ const EnquiriesView = memo(({ enquiries, onStatusUpdate, onDelete }: { enquiries
                 <option value="Archived">Archived</option>
               </select>
             </div>
-            <button 
-              className={styles.deleteBtn}
-              onClick={() => onDelete(enq.id)}
-              style={{ padding: '8px' }}
-            >
-              🗑️
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {enq.sampleImage && (
+                <button 
+                  className={styles.downloadBtn}
+                  onClick={() => generateEnquiryPDF(enq)}
+                  title="Download Request PDF"
+                  style={{ background: 'rgba(191,149,63,0.1)', color: '#BF953F', border: '1px solid #BF953F', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', fontWeight: 800 }}
+                >
+                  <FiDownload size={14} /> PDF
+                </button>
+              )}
+              <button 
+                className={styles.deleteBtn}
+                onClick={() => onDelete(enq.id)}
+                style={{ padding: '8px' }}
+              >
+                🗑️
+              </button>
+            </div>
           </div>
         </div>
       ))}
@@ -701,7 +841,7 @@ const DealOfDayView = memo(({ products, dealIds, setDealIds }: { products: Produ
                 </div>
                 <div className={styles.details}>
                   <h3>{p.name}</h3>
-                  <p>{p.category} • ₹{p.variants[0]?.price.toLocaleString()}</p>
+                  <p>{p.category} • ₹{(p.variants[0]?.price ?? 0).toLocaleString()}</p>
                 </div>
               </div>
               <div className={styles.actions}>
@@ -845,6 +985,8 @@ export default function AdminPage() {
   const [stockFilterId, setStockFilterId] = useState<number | null>(null);
   const [preview3dOpen, setPreview3dOpen] = useState(false);
   const [isRotatorOpen, setIsRotatorOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
 
   const initialFormState: Product = {
     name: '', category: CATEGORIES[0], description: '', isWeapon: false, 
@@ -869,7 +1011,7 @@ export default function AdminPage() {
       setIsAuthenticated(true);
     }
 
-    fetch('/api/products').then(r => r.json()).then(data => {
+    fetch('/api/products?limit=5000').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setProducts(data);
     });
     fetch('/api/deals').then(r => r.json()).then(data => {
@@ -919,34 +1061,40 @@ export default function AdminPage() {
     }
 
     try {
+      let resp;
       if (activeView === 'inventory') {
-        const resp = await fetch('/api/products', {
+        resp = await fetch('/api/products?limit=5000', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await resp.json();
-        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch products');
-        setProducts(data);
       } else if (activeView === 'orders') {
-        const resp = await fetch('/api/orders', {
+        resp = await fetch('/api/orders', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await resp.json();
-        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch orders');
-        setOrders(data);
       } else if (activeView === 'users' || activeView === 'leads') {
-        const resp = await fetch('/api/users', {
+        resp = await fetch('/api/users', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await resp.json();
-        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch users');
-        setUsers(data);
       } else if (activeView === 'enquiries') {
-        const resp = await fetch('/api/admin/enquiries', {
+        resp = await fetch('/api/admin/enquiries', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+      }
+
+      if (resp) {
+        if (resp.status === 401) {
+          console.error('ARCHIVE: AUTHENTICATION INVALIDATED. RE-IDENTIFICATION REQUIRED.');
+          sessionStorage.clear();
+          setIsAuthenticated(false);
+          return;
+        }
+
         const data = await resp.json();
-        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch enquiries');
-        setEnquiries(data);
+        if (!resp.ok || data.error) throw new Error(data.error || 'Failed to fetch heritage batch');
+        
+        if (activeView === 'inventory') setProducts(data);
+        else if (activeView === 'orders') setOrders(data);
+        else if (activeView === 'enquiries') setEnquiries(data);
+        else if (activeView === 'users' || activeView === 'leads') setUsers(data);
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -996,18 +1144,31 @@ export default function AdminPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setUploadStatus(editingProduct ? 'UPDATING ARTIFACT DATA...' : 'FORGING NEW HERITAGE RECORD...');
+    
     const method = editingProduct ? 'PUT' : 'POST';
     const token = sessionStorage.getItem('curator_token');
-    await fetch('/api/products', {
-      method, 
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }, 
-      body: JSON.stringify(formData)
-    });
-    setIsModalOpen(false);
-    fetchData();
+    
+    try {
+      const resp = await fetch('/api/products', {
+        method, 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }, 
+        body: JSON.stringify(formData)
+      });
+      
+      if (!resp.ok) throw new Error('Heritage Submission Failed');
+      
+      setIsModalOpen(false);
+      await fetchData(); // Immediate sync of admin state
+    } catch (err) {
+      alert('Archive Maintenance Failure: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCategoryRename = async () => {
@@ -1103,9 +1264,12 @@ export default function AdminPage() {
     setFormData({ ...formData, variants: newVariants });
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'model3d') => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'model3d', variantIndex?: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setIsSubmitting(true);
+    setUploadStatus(field === 'image' ? 'UPLOADING ARTIFACT VISUALS...' : 'UPLOADING 3D MODEL ARCHIVE...');
 
     const formData = new FormData();
     formData.append('file', file);
@@ -1117,11 +1281,17 @@ export default function AdminPage() {
       });
       const data = await resp.json();
       if (data.url) {
-        setFormData(prev => ({ ...prev, [field]: data.url }));
+        if (variantIndex !== undefined) {
+          updateVariant(variantIndex, field, data.url);
+        } else {
+          setFormData(prev => ({ ...prev, [field]: data.url }));
+        }
       }
     } catch (err) {
       console.error('Upload failed:', err);
       alert('Upload failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1381,18 +1551,26 @@ export default function AdminPage() {
           <EnquiriesView 
             enquiries={enquiries} 
             onStatusUpdate={async (id, status) => {
+              const token = sessionStorage.getItem('curator_token');
               await fetch('/api/admin/enquiries', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ id, status })
               });
               fetchData();
             }}
             onDelete={async (id) => {
               if (!confirm('Permanently remove this inquiry from the archive?')) return;
+              const token = sessionStorage.getItem('curator_token');
               await fetch('/api/admin/enquiries', {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ id })
               });
               fetchData();
@@ -1405,7 +1583,16 @@ export default function AdminPage() {
 
       {isModalOpen && (
         <div className={styles.modal}>
-          <div className={styles.modalContent}>
+          <div className={styles.modalContent} style={{ position: 'relative' }}>
+            {isSubmitting && (
+              <div className={styles.forgeOverlay}>
+                <div className={styles.forgeTitle}>HERITAGE FORGE</div>
+                <div className={styles.forgeBar}>
+                  <div className={styles.forgeProgress}></div>
+                </div>
+                <div className={styles.forgeStatus}>{uploadStatus}</div>
+              </div>
+            )}
             <div className={styles.modalHeader}>
               <h3>{editingProduct ? 'EDIT ARTIFACT' : 'NEW ARTIFACT'}</h3>
               <button className={styles.closeModalBtn} onClick={() => setIsModalOpen(false)}>✕</button>
@@ -1753,53 +1940,101 @@ export default function AdminPage() {
                 </div>
                 <div className={styles.variantList}>
                   {formData.variants.map((v, i) => (
-                    <div key={i} className={styles.variantRow}>
-                      <input 
-                        type="text" 
-                        placeholder="Size" 
-                        value={v.size} 
-                        onChange={e => updateVariant(i, 'size', e.target.value)} 
-                        required 
-                      />
-                      <input 
-                        type="number" 
-                        placeholder="Price" 
-                        value={v.price} 
-                        onChange={e => updateVariant(i, 'price', parseInt(e.target.value) || 0)} 
-                        required 
-                      />
-                      <input 
-                        type="number" 
-                        placeholder="Old Price" 
-                        value={v.old_price} 
-                        onChange={e => updateVariant(i, 'old_price', parseInt(e.target.value) || 0)} 
-                        required 
-                      />
-                      <input 
-                        type="number" 
-                        placeholder="Stock" 
-                        title="Quantity in Stock"
-                        value={v.stock} 
-                        onChange={e => updateVariant(i, 'stock', parseInt(e.target.value) || 0)} 
-                        required 
-                      />
-                      <input 
-                        type="number" 
-                        placeholder="Refill At" 
-                        title="Alert when stock hits this level"
-                        className={styles.refillInput}
-                        value={v.refillLevel} 
-                        onChange={e => updateVariant(i, 'refillLevel', parseInt(e.target.value) || 0)} 
-                        required 
-                      />
-                      <button 
-                        type="button" 
-                        className={styles.removeVariantBtn}
-                        onClick={() => removeVariant(i)}
-                        disabled={formData.variants.length <= 1}
-                      >
-                        ✕
-                      </button>
+                    <div key={i} className={styles.variantRowDetailed}>
+                      <div className={styles.variantInputsGrid}>
+                        <input 
+                          type="text" 
+                          placeholder="Size / Color" 
+                          value={v.size} 
+                          onChange={e => updateVariant(i, 'size', e.target.value)} 
+                          required 
+                        />
+                        <input 
+                          type="number" 
+                          placeholder="Price" 
+                          value={v.price} 
+                          onChange={e => updateVariant(i, 'price', parseInt(e.target.value) || 0)} 
+                          required 
+                        />
+                        <input 
+                          type="number" 
+                          placeholder="Old Price" 
+                          value={v.old_price} 
+                          onChange={e => updateVariant(i, 'old_price', parseInt(e.target.value) || 0)} 
+                          required 
+                        />
+                        <input 
+                          type="number" 
+                          placeholder="Stock" 
+                          title="Quantity in Stock"
+                          value={v.stock} 
+                          onChange={e => updateVariant(i, 'stock', parseInt(e.target.value) || 0)} 
+                          required 
+                        />
+                        <input 
+                          type="number" 
+                          placeholder="Refill At" 
+                          title="Alert when stock hits this level"
+                          className={styles.refillInput}
+                          value={v.refillLevel} 
+                          onChange={e => updateVariant(i, 'refillLevel', parseInt(e.target.value) || 0)} 
+                          required 
+                        />
+                        <button 
+                          type="button" 
+                          className={styles.removeVariantBtn}
+                          onClick={() => removeVariant(i)}
+                          disabled={formData.variants.length <= 1}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      
+                      <div className={styles.variantVisualsRow}>
+                        <div className={styles.variantVisualItem}>
+                          <button 
+                            type="button" 
+                            className={`${styles.variantVisualBtn} ${v.image ? styles.visualPresent : ''}`}
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.onchange = (e) => handleFileUpload(e as any, 'image', i);
+                              input.click();
+                            }}
+                          >
+                            {v.image ? '🖼️ Image Linked' : '🖼️ Add Image'}
+                          </button>
+                        </div>
+                        <div className={styles.variantVisualItem}>
+                          <button 
+                            type="button" 
+                            className={`${styles.variantVisualBtn} ${v.model3d ? styles.visualPresent : ''}`}
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = '.glb';
+                              input.onchange = (e) => handleFileUpload(e as any, 'model3d', i);
+                              input.click();
+                            }}
+                          >
+                            {v.model3d ? '🔮 3D Linked' : '🔮 Add 3D'}
+                          </button>
+                        </div>
+                        {(v.image || v.model3d) && (
+                          <button 
+                            type="button" 
+                            className={styles.clearVisualsBtn}
+                            onClick={() => {
+                              const newVariants = [...formData.variants];
+                              newVariants[i] = { ...newVariants[i], image: undefined, model3d: undefined };
+                              setFormData({ ...formData, variants: newVariants });
+                            }}
+                          >
+                            Clear Visuals
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

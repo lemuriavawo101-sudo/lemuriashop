@@ -6,7 +6,8 @@ export async function POST(request: Request) {
     const { email, password } = await request.json();
     
     // BOOTSTRAP FALLBACK: Priority check to allow access even if DB is unconfigured
-    const token = process.env.ADMIN_SECRET_KEY || 'archival_fallback_token_v24';
+    let token = process.env.ADMIN_SECRET_KEY || 'archival_fallback_token_v24';
+    token = token.replace(/^["']|["']$/g, '');
 
     if (email === 'admin@lemuria.com' && password === 'admin') {
       console.log('ARCHIVE: EMERGENCY BOOTSTRAP ACCESS GRANTED');

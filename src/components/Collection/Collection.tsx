@@ -62,8 +62,10 @@ const ExhibitionCard = memo(({ product, addToCart, onOpen3D, onViewProduct }: {
   const { showToast } = useToast();
   const { isLowPower, webGLSupported } = usePerformance();
   const [selectedVariant, setSelectedVariant] = useState(0);
-  const variant = product.variants[selectedVariant];
+  const variant = product.variants?.[selectedVariant];
   const itemInWishlist = isInWishlist(product.id);
+  
+  if (!variant) return null;
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -140,18 +142,18 @@ const ExhibitionCard = memo(({ product, addToCart, onOpen3D, onViewProduct }: {
         <div className={styles.priceRow}>
           <div className={styles.priceContainer}>
             <span className={styles.currency}>₹</span>
-            <span className={styles.price}>{variant.price.toLocaleString()}</span>
+            <span className={styles.price}>{variant ? variant.price.toLocaleString() : '---'}</span>
           </div>
         </div>
 
         <div className={styles.buttonRow}>
           <button 
             className="btnPremium btnPremiumGold"
-            disabled={isOutOfStock}
-            onClick={(e) => { e.stopPropagation(); if (!isOutOfStock) addToCart(product, variant); }}
+            disabled={isOutOfStock || !variant}
+            onClick={(e) => { e.stopPropagation(); if (!isOutOfStock && variant) addToCart(product, variant); }}
             style={{ flex: 1 }}
           >
-            {isOutOfStock ? 'OUT' : 'ACQUIRE'}
+            {!variant ? 'ARCHIVAL' : isOutOfStock ? 'OUT' : 'BUY'}
           </button>
           <button 
             className="btnPremium btnPremiumGlass"

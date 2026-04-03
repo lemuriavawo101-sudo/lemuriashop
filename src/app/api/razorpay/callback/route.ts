@@ -43,16 +43,32 @@ export async function POST(request: Request) {
       });
 
       if (existing.rows.length === 0) {
+        // Parse metadata safely
+        const items = notes.items || '[]';
+        const delivery = notes.delivery || '{}';
+        const customer = notes.customer || 'Anonymous';
+        const total = parseFloat(notes.total) || 0;
+        const subtotal = parseFloat(notes.subtotal) || 0;
+        const tax = parseFloat(notes.tax) || 0;
+        const protectFee = parseFloat(notes.protectFee) || 0;
+        const shipping = parseFloat(notes.shipping) || 0;
+        const uid = notes.uid || null;
+
         await db.execute({
-          sql: 'INSERT INTO orders (id, customer, total, status, date, items, delivery) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          sql: 'INSERT INTO orders (id, customer, total, status, date, items, delivery, userId, subtotal, tax, protectFee, shipping) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           args: [
             razorpay_payment_id,
-            notes.customer || 'Anonymous',
-            notes.total || 0,
+            customer,
+            total,
             'Paid',
             new Date().toISOString(),
-            notes.items || '[]',
-            notes.delivery || '{}'
+            typeof items === 'string' ? items : JSON.stringify(items),
+            typeof delivery === 'string' ? delivery : JSON.stringify(delivery),
+            uid,
+            subtotal,
+            tax,
+            protectFee,
+            shipping
           ]
         });
       }

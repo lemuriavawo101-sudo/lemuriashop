@@ -26,9 +26,11 @@ const CheckoutDrawer: React.FC = () => {
 
   if (isAdmin) return null;
 
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((acc, item) => acc + ((item.price ?? 0) * (item.quantity ?? 1)), 0);
   const tax = subtotal * 0.18; // GST 18%
-  const total = subtotal + tax;
+  const protectFee = 50;
+  const shipping = 100;
+  const total = subtotal + tax + protectFee + shipping;
 
   const [delivery, setDelivery] = React.useState({
     address: '',
@@ -103,8 +105,13 @@ const CheckoutDrawer: React.FC = () => {
                 : i.image
             }))),
             total: total,
+            subtotal: subtotal,
+            tax: tax,
+            protectFee: protectFee,
+            shipping: shipping,
             customer: user?.name || 'Anonymous Practitioner',
-            delivery: JSON.stringify(delivery)
+            delivery: JSON.stringify(delivery),
+            uid: user?.uid || null
           }
         })
       });
@@ -127,6 +134,10 @@ const CheckoutDrawer: React.FC = () => {
           name: i.name 
         }))),
         total: total,
+        subtotal: subtotal,
+        tax: tax,
+        protectFee: protectFee,
+        shipping: shipping,
         customer: user?.name || 'Anonymous Practitioner',
         delivery: JSON.stringify(delivery)
       };
@@ -143,7 +154,7 @@ const CheckoutDrawer: React.FC = () => {
         image: `https://${window.location.host}/favicon.svg`, 
         order_id: order.id,
         // THE ABSOLUTE FORGE: Hardcoded Global Handshake Bridge
-        callback_url: `https://lemuriashop.vercel.app/api/razorpay/verify`,
+        callback_url: `${window.location.origin}/api/razorpay/callback`,
         redirect: true, 
         
         // 2. handler: Frontend high-speed path (Disabled when redirect: true)
@@ -188,7 +199,7 @@ const CheckoutDrawer: React.FC = () => {
       
       <div className={`${styles.drawer} ${isCartOpen ? styles.drawerContentOpen : ''}`}>
         <div className={styles.header}>
-          <h2>ACQUISITION SANCTUARY</h2>
+          <h2>PURCHASE CHECKOUT</h2>
           <button className={styles.closeBtn} onClick={() => setIsCartOpen(false)}>✕</button>
         </div>
 
@@ -235,12 +246,12 @@ const CheckoutDrawer: React.FC = () => {
             <div className={styles.checkoutPanel}>
               <div className={styles.deliveryForm}>
                 <div className={styles.panelHeader}>
-                  <h3>DELIVERY DESTINATION</h3>
-                  <p>Provide sanctuary coordinates for secure dispatch.</p>
+                  <h3>DELIVERY DETAILS</h3>
+                  <p>Provide address for dispatch.</p>
                 </div>
                 
                 <div className={styles.inputGroup}>
-                  <label>PRACTITIONER CONTACT</label>
+                  <label>CONTACT NUMBER</label>
                   <input 
                     type="tel" 
                     placeholder="10 Digits" 
@@ -254,7 +265,7 @@ const CheckoutDrawer: React.FC = () => {
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label>SANCTUARY ADDRESS</label>
+                  <label>SHIPPING ADDRESS</label>
                   <textarea 
                     placeholder="Full street, building, and apartment details" 
                     rows={4}
@@ -290,8 +301,16 @@ const CheckoutDrawer: React.FC = () => {
                   <span className={styles.summaryValue}>₹{subtotal.toLocaleString()}</span>
                 </div>
                 <div className={styles.summaryRow}>
-                  <span className={styles.summaryLabel}>Hereditary Tax (GST 18%)</span>
+                  <span className={styles.summaryLabel}>Tax (GST 18%)</span>
                   <span className={styles.summaryValue}>₹{tax.toLocaleString()}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Protect Fee</span>
+                  <span className={styles.summaryValue}>₹{protectFee.toLocaleString()}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Shipping</span>
+                  <span className={styles.summaryValue}>₹{shipping.toLocaleString()}</span>
                 </div>
                 <div className={styles.totalRow}>
                   <div className={styles.totalLabelGroup}>
@@ -321,7 +340,7 @@ const CheckoutDrawer: React.FC = () => {
                           router.push(successUrl.pathname + successUrl.search);
                         }}
                       >
-                        CONFIRM ACQUISITION <span className={styles.arrow}>→</span>
+                        CONFIRM PURCHASE <span className={styles.arrow}>→</span>
                       </button>
                     ) : (
                       <div className={styles.pulsingHint}>
@@ -340,7 +359,7 @@ const CheckoutDrawer: React.FC = () => {
                     disabled={!isFormValid || paymentInProgress}
                   >
                     {paymentInProgress ? 'INITIALIZING ENGINE...' : 
-                     isFormValid ? 'SECURE ACQUISITION' : 'PROVIDE COORDINATES TO ACQUIRE'}
+                     isFormValid ? 'SECURE PURCHASE' : 'PROVIDE COORDINATES TO BUY'}
                   </button>
                 )}
                 <div className={styles.securitySeal}>
@@ -348,7 +367,7 @@ const CheckoutDrawer: React.FC = () => {
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
-                  <span>SECURED BY RAZORPAY ACQUISITION ENGINE • 256-BIT ENCRYPTION</span>
+                  <span>SECURED BY RAZORPAY PAYMENT ENGINE • 256-BIT ENCRYPTION</span>
                 </div>
               </div>
             </div>

@@ -63,7 +63,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         id: product.id,
         name: product.name,
         category: product.category,
-        price: product.variants?.[0]?.price || 0,
+        price: product.variants?.[0]?.price ?? 0,
         image: product.image,
         model3d: product.model3d,
         variants: product.variants || []

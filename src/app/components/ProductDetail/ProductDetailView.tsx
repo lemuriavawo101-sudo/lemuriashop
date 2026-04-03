@@ -19,7 +19,14 @@ interface Product {
   category: string;
   description: string;
   isWeapon: boolean;
-  variants: any[];
+  variants: {
+    size: string;
+    price: number;
+    old_price: number;
+    stock: number;
+    image?: string;
+    model3d?: string;
+  }[];
   image: string;
   model3d?: string;
   rotation?: number;
@@ -30,12 +37,12 @@ interface Product {
 }
 
 const ProductDetailView = ({ product, initialReviews = [] }: { product: Product, initialReviews?: any[] }) => {
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
   const { user, isAuthenticated } = useAuth();
   const { isLowPower, webGLSupported } = usePerformance();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
+  const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] ?? null);
   const [showModel, setShowModel] = useState(false);
   const [adding, setAdding] = useState(false);
   const reviewSectionRef = useRef<HTMLElement>(null);
@@ -59,6 +66,11 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
     setAdding(true);
     addToCart(product, selectedVariant);
     setTimeout(() => setAdding(false), 1500);
+  };
+
+  const handleBuyImmediately = () => {
+    addToCart(product, selectedVariant);
+    setIsCartOpen(true);
   };
 
   const handleSubmitReview = async () => {
@@ -113,7 +125,7 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
             <div className={styles.mainImageWrapper}>
               <div className={styles.studioBackdrop}></div>
               <Image
-                src={product.image}
+                src={selectedVariant.image || product.image}
                 alt={product.name}
                 fill
                 priority
@@ -121,7 +133,7 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
                 style={{ transform: product.rotation ? `rotate(${product.rotation}deg)` : 'none' }}
               />
               
-              {product.model3d && (
+              {(selectedVariant.model3d || product.model3d) && (
                 <button 
                   className={styles.floating3dBtn}
                   onClick={() => setShowModel(true)}
@@ -132,10 +144,21 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
             </div>
             
             <div className={styles.thumbnailStrip}>
-              <div className={styles.thumbActive}>
-                <Image src={product.image} alt="Front View" width={80} height={80} />
+              <div 
+                className={`${styles.thumbActive} ${!selectedVariant.image ? styles.thumbSelected : ''}`}
+                onClick={() => setSelectedVariant(product.variants[0])}
+              >
+                <Image src={product.image} alt="Primary View" width={80} height={80} />
               </div>
-              {/* Future: Add more views if available in data */}
+              {product.variants.map((v, i) => v.image && (
+                <div 
+                  key={i} 
+                  className={`${styles.thumbActive} ${selectedVariant.size === v.size ? styles.thumbSelected : ''}`}
+                  onClick={() => setSelectedVariant(v)}
+                >
+                  <Image src={v.image} alt={v.size} width={80} height={80} />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -161,8 +184,8 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
             <div className={styles.pricingBlock}>
               <div className={styles.priceRow}>
                 <span className={styles.currency}>₹</span>
-                <span className={styles.price}>{selectedVariant.price.toLocaleString()}</span>
-                {selectedVariant.old_price > selectedVariant.price && (
+                <span className={styles.price}>{selectedVariant?.price ? selectedVariant.price.toLocaleString() : '---'}</span>
+                {selectedVariant && selectedVariant.old_price > selectedVariant.price && (
                   <span className={styles.oldPrice}>₹{selectedVariant.old_price.toLocaleString()}</span>
                 )}
               </div>
@@ -170,39 +193,46 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
             </div>
 
             {/* Variant Selector */}
-            <div className={styles.variantsBlock}>
-              <h3 className={styles.sectionTitle}>SELECT SPECIFICATION</h3>
-              <div className={styles.variantGrid}>
-                {product.variants.map((v, i) => (
-                  <button
-                    key={i}
-                    className={`${styles.variantBtn} ${selectedVariant.size === v.size ? styles.activeVariant : ''}`}
-                    onClick={() => setSelectedVariant(v)}
-                  >
-                    <span className={styles.vSize}>{v.size}</span>
-                    <span className={styles.vPrice}>₹{v.price.toLocaleString()}</span>
-                  </button>
-                ))}
+            {product.variants.length > 0 && (
+              <div className={styles.variantsBlock}>
+                <h3 className={styles.sectionTitle}>SELECT SPECIFICATION</h3>
+                <div className={styles.variantGrid}>
+                  {product.variants.map((v, i) => (
+                    <button
+                      key={i}
+                      className={`${styles.variantBtn} ${selectedVariant?.size === v.size ? styles.activeVariant : ''}`}
+                      onClick={() => setSelectedVariant(v)}
+                    >
+                      <span className={styles.vSize}>{v.size}</span>
+                      <span className={styles.vPrice}>₹{(v.price ?? 0).toLocaleString()}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Amazon-style BuyBox */}
             <div className={styles.buyBox}>
               <div className={styles.stockStatus}>
                 <div className={styles.statusDot}></div>
-                IN STOCK & READY FOR DISPATCH
+                {product.variants.length > 0 ? 'IN STOCK & READY FOR DISPATCH' : 'ARCHIVAL ARTIFACT (VIEWING ONLY)'}
               </div>
               
               <button 
                 className={`btnPremium btnPremiumGold ${adding ? styles.added : ''}`}
                 onClick={handleAddToCart}
-                disabled={adding}
+                disabled={adding || !selectedVariant}
               >
-                <FiShoppingBag /> {adding ? 'SECURED IN BAG' : 'ADD TO COLLECTION'}
+                <FiShoppingBag /> {adding ? 'ADDED TO CART' : !selectedVariant ? 'UNAVAILABLE' : 'ADD TO CART'}
               </button>
               
-              <button className="btnPremium btnPremiumGlass" style={{ width: '100%', marginTop: '10px' }}>
-                ACQUIRE IMMEDIATELY
+              <button 
+                className="btnPremium btnPremiumGlass" 
+                style={{ width: '100%', marginTop: '10px' }}
+                onClick={handleBuyImmediately}
+                disabled={!selectedVariant}
+              >
+                BUY IMMEDIATELY
               </button>
 
               <div className={styles.trustSignals}>
@@ -305,11 +335,11 @@ const ProductDetailView = ({ product, initialReviews = [] }: { product: Product,
 
       {/* 3D Model Explorer Overlay */}
       <AnimatePresence>
-        {showModel && product.model3d && (
+        {showModel && (selectedVariant.model3d || product.model3d) && (
           <CinematicViewer
-            src={product.model3d}
+            src={selectedVariant.model3d || product.model3d || ''}
             name={product.name}
-            image={product.image}
+            image={selectedVariant.image || product.image}
             onClose={() => setShowModel(false)}
             modelRotation={product.modelRotation}
             modelRotationX={product.modelRotationX}

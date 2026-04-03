@@ -4,11 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import styles from './my-orders.module.css';
+import { generateInvoice } from '@/lib/invoice-generator';
+import { FiDownload } from 'react-icons/fi';
 
 interface Order {
   id: string;
   customer: string;
   total: number;
+  subtotal: number;
+  tax: number;
+  protectFee: number;
+  shipping: number;
   status: string;
   date: string;
   items: any[];
@@ -53,7 +59,7 @@ export default function MyOrdersPage() {
     return (
       <div className={styles.container}>
         <div className={styles.noOrders}>
-          <p>PLEASE SIGN IN TO VIEW YOUR ORDER ARCHIVE</p>
+          <p>PLEASE SIGN IN TO VIEW YOUR ORDER HISTORY</p>
           <Link href="/auth/signin" className={styles.shopLink}>SIGN IN</Link>
         </div>
       </div>
@@ -66,7 +72,7 @@ export default function MyOrdersPage() {
 
       {orders.length === 0 ? (
         <div className={styles.noOrders}>
-          <p>NO ACQUISITIONS FOUND IN YOUR ARCHIVE</p>
+          <p>NO ORDERS FOUND IN YOUR ARCHIVE</p>
           <Link href="/products" className={styles.shopLink}>EXPLORE PRODUCTS</Link>
         </div>
       ) : (
@@ -81,6 +87,14 @@ export default function MyOrdersPage() {
                 <div className={`${styles.statusBadge} ${order.status === 'Delivered' ? styles.statusDelivered : ''}`}>
                   {order.status.toUpperCase()}
                 </div>
+                <button 
+                  className={styles.downloadBtn} 
+                  onClick={() => generateInvoice(order)}
+                  title="Download Tax Invoice"
+                  style={{ background: 'rgba(255,180,0,0.1)', border: '1px solid rgba(255,180,0,0.3)', color: '#FFB400', padding: '5px 10px', borderRadius: '5px', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '0.8rem' }}
+                >
+                  <FiDownload size={14} /> INVOICE
+                </button>
               </div>
 
               <div className={styles.itemsGrid}>
@@ -90,21 +104,21 @@ export default function MyOrdersPage() {
                       <span className={styles.itemName}>{item.name}</span>
                       <span className={styles.itemQty}>QTY: {item.quantity}</span>
                     </div>
-                    <div className={styles.itemPrice}>₹{item.price * item.quantity}</div>
+                    <div className={styles.itemPrice}>₹{(item.price ?? 0) * (item.quantity ?? 1)}</div>
                   </div>
                 ))}
               </div>
 
               <div className={styles.orderFooter}>
-                <span className={styles.totalLabel}>TOTAL ACQUISITION VALUE</span>
+                <span className={styles.totalLabel}>TOTAL ORDER VALUE</span>
                 <span className={styles.totalAmount}>₹{order.total}</span>
               </div>
 
               {order.status === 'Delivered' && (
                 <div className={styles.reviewPrompt}>
                   <div className={styles.reviewText}>
-                    <h4>ARTIFACT REVIEW REQUIRED</h4>
-                    <p>Your acquisition has been preserved. Your feedback helps us maintain the heritage.</p>
+                    <h4>PRODUCT REVIEW REQUIRED</h4>
+                    <p>Your order has been delivered. Your feedback helps us improve.</p>
                   </div>
                   <Link 
                     href={`/products/${order.items[0]?.id}?review=true`} 

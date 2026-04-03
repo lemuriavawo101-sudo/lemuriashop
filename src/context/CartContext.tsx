@@ -64,6 +64,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/auth/signin');
       return;
     }
+    if (!variant || typeof variant.price === 'undefined') return;
 
     setCartItems(prev => {
       const existingItem = prev.find(item => item.id === product.id && item.size === variant.size);

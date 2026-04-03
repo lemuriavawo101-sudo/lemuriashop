@@ -65,14 +65,14 @@ const WishlistPage = () => {
                 <div className={styles.info}>
                   <div className={styles.category}>{item.category.toUpperCase()}</div>
                   <h3 className={styles.name}>{item.name.toUpperCase()}</h3>
-                  <div className={styles.price}>₹{item.price.toLocaleString()}</div>
+                  <div className={styles.price}>₹{(item.price ?? 0).toLocaleString()}</div>
                   
                   <div className={styles.actions}>
                     <button 
                       className="btnPremium btnPremiumGold"
-                      onClick={() => addToCart(item, item.variants[0])}
+                      onClick={() => item.variants?.[0] && addToCart(item, item.variants[0])}
                     >
-                      ACQUIRE
+                      BUY
                     </button>
                     <Link href={`/products`} className={styles.detailsLink}>
                       VIEW DETAILS

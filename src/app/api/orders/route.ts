@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { verifyCuratorToken, unauthorizedResponse } from '@/lib/admin-auth';
 
 export async function GET(request: Request) {
   try {
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     await db.execute({
-      sql: 'INSERT INTO orders (id, customer, total, status, date, items, delivery, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO orders (id, customer, total, status, date, items, delivery, userId, subtotal, tax, protectFee, shipping) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         id, 
         o.customer, 
@@ -59,7 +60,11 @@ export async function POST(request: Request) {
         date, 
         typeof o.items === 'string' ? o.items : JSON.stringify(o.items), 
         typeof o.delivery === 'string' ? o.delivery : JSON.stringify(o.delivery), 
-        userId
+        userId,
+        o.subtotal || 0,
+        o.tax || 0,
+        o.protectFee || 0,
+        o.shipping || 0
       ]
     });
 
@@ -70,6 +75,10 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  if (!verifyCuratorToken(request)) {
+    return unauthorizedResponse();
+  }
+
   try {
     const { id, status } = await request.json();
     await db.execute({
@@ -83,6 +92,10 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!verifyCuratorToken(request)) {
+    return unauthorizedResponse();
+  }
+
   try {
     const { id } = await request.json();
     await db.execute({ sql: 'DELETE FROM orders WHERE id = ?', args: [id] });

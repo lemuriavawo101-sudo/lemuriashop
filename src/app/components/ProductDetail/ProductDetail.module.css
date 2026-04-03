@@ -279,6 +279,29 @@
   color: #BF953F;
 }
 
+.activeVariant .thumbActive {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.thumbActive:hover {
+  border-color: rgba(191, 149, 63, 0.5);
+  transform: translateY(-2px);
+}
+
+.thumbSelected {
+  border-color: #BF953F;
+  background: rgba(191, 149, 63, 0.1);
+  box-shadow: 0 0 20px rgba(191, 149, 63, 0.2);
+}
+
 /* BuyBox */
 .buyBox {
   background: rgba(255, 255, 255, 0.03);
