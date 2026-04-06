@@ -16,7 +16,9 @@ export async function POST(request: Request) {
     const razorpay_signature = formData.get('razorpay_signature') as string;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return NextResponse.redirect(new URL('/?error=invalid_callback', request.url), { status: 302 });
+      const host = request.headers.get('host') || 'shop.lemuriavawo.org';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      return NextResponse.redirect(new URL('/?error=invalid_callback', `${protocol}://${host}`), { status: 302 });
     }
 
     // 1. Verify Signature
@@ -28,7 +30,9 @@ export async function POST(request: Request) {
       .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
-      return NextResponse.redirect(new URL('/?error=signature_mismatch', request.url), { status: 302 });
+      const host = request.headers.get('host') || 'shop.lemuriavawo.org';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      return NextResponse.redirect(new URL('/?error=signature_mismatch', `${protocol}://${host}`), { status: 302 });
     }
 
     // 2. Fetch Order Details (Notes) to get products/delivery info
@@ -75,14 +79,24 @@ export async function POST(request: Request) {
     }
 
     // 4. Redirect to Success Page
-    const successUrl = new URL('/checkout/success', request.url);
+    const host = request.headers.get('host') || 'shop.lemuriavawo.org';
+    const protocol = (host.includes('localhost') || host.includes('127.0.0.1')) ? 'http' : 'https';
+    
+    // ENSURE PRODUCTION DOMAIN for Razorpay handshakes if not local
+    const finalHost = (host.includes('localhost') || host.includes('127.0.0.1')) ? host : 'shop.lemuriavawo.org';
+    
+    const successUrl = new URL('/checkout/success', `${protocol}://${finalHost}`);
     successUrl.searchParams.set('razorpay_payment_id', razorpay_payment_id);
     successUrl.searchParams.set('razorpay_order_id', razorpay_order_id);
     successUrl.searchParams.set('razorpay_signature', razorpay_signature);
     
+    console.log('[Acquisition Callback] Final Redirect to:', successUrl.toString());
     return NextResponse.redirect(successUrl, { status: 302 });
   } catch (error: any) {
     console.error('Callback Error:', error);
-    return NextResponse.redirect(new URL('/?error=callback_failed', request.url), { status: 302 });
+    const host = request.headers.get('host') || 'shop.lemuriavawo.org';
+    const protocol = (host.includes('localhost') || host.includes('127.0.0.1')) ? 'http' : 'https';
+    const finalHost = (host.includes('localhost') || host.includes('127.0.0.1')) ? host : 'shop.lemuriavawo.org';
+    return NextResponse.redirect(new URL('/?error=callback_failed', `${protocol}://${finalHost}`), { status: 302 });
   }
 }

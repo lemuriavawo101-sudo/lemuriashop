@@ -29,6 +29,12 @@ interface Variant {
   price: number;
   old_price: number;
   stock: number;
+  image?: string;
+  model3d?: string;
+  rotation?: number;
+  modelRotation?: number;
+  modelRotationX?: number;
+  modelRotationZ?: number;
 }
 
 interface Product {

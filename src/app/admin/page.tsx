@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, memo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, memo, useRef, useCallback } from 'react';
 import styles from './admin.module.css';
 import dynamic from 'next/dynamic';
 import { generateInvoice } from '@/lib/invoice-generator';
@@ -17,6 +17,10 @@ interface ProductVariant {
   refillLevel: number;
   image?: string;
   model3d?: string;
+  rotation?: number;
+  modelRotation?: number;
+  modelRotationX?: number;
+  modelRotationZ?: number;
 }
 
 interface Product {
@@ -658,6 +662,25 @@ const generateEnquiryPDF = async (enq: Enquiry) => {
   }
 };
 
+const downloadImage = (url: string, filename: string) => {
+  fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(err => {
+      console.error('Download failing:', err);
+      window.open(url, '_blank'); // Fallback to new tab
+    });
+};
+
 const EnquiriesView = memo(({ enquiries, onStatusUpdate, onDelete }: { enquiries: Enquiry[], onStatusUpdate: (id: string, s: string) => void, onDelete: (id: string) => void }) => (
   <div className={styles.view}>
     <div className={styles.header}>
@@ -728,14 +751,27 @@ const EnquiriesView = memo(({ enquiries, onStatusUpdate, onDelete }: { enquiries
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               {enq.sampleImage && (
-                <button 
-                  className={styles.downloadBtn}
-                  onClick={() => generateEnquiryPDF(enq)}
-                  title="Download Request PDF"
-                  style={{ background: 'rgba(191,149,63,0.1)', color: '#BF953F', border: '1px solid #BF953F', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', fontWeight: 800 }}
-                >
-                  <FiDownload size={14} /> PDF
-                </button>
+                <>
+                  <button 
+                    className={styles.downloadBtn}
+                    onClick={() => generateEnquiryPDF(enq)}
+                    title="Download Request PDF"
+                    style={{ background: 'rgba(191,149,63,0.1)', color: '#BF953F', border: '1px solid #BF953F', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', fontWeight: 800 }}
+                  >
+                    <FiDownload size={14} /> PDF
+                  </button>
+                  <button 
+                    className={styles.downloadBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadImage(enq.sampleImage!, `Requst_Reference_${enq.name.replace(/\s+/g, '_')}`);
+                    }}
+                    title="Download Original Image"
+                    style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem' }}
+                  >
+                    <FiDownload size={14} /> IMAGE
+                  </button>
+                </>
               )}
               <button 
                 className={styles.deleteBtn}
@@ -987,10 +1023,12 @@ export default function AdminPage() {
   const [isRotatorOpen, setIsRotatorOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [variantPreview3d, setVariantPreview3d] = useState<string | null>(null);
+  const [variantPreviewName, setVariantPreviewName] = useState<string>('');
 
   const initialFormState: Product = {
     name: '', category: CATEGORIES[0], description: '', isWeapon: false, 
-    variants: [{ size: 'Standard', price: 0, old_price: 0, stock: 10, refillLevel: 3 }], image: '', model3d: '', rotation: 0, modelRotation: 0, modelRotationX: 0, modelRotationZ: 0,
+    variants: [{ size: 'Standard', price: 0, old_price: 0, stock: 10, refillLevel: 3, rotation: 0, modelRotation: 0, modelRotationX: 0, modelRotationZ: 0 }], image: '', model3d: '', rotation: 0, modelRotation: 0, modelRotationX: 0, modelRotationZ: 0,
     artifactType: 'Standard',
     stock: 'In Stock',
     showInCollection: true
@@ -1051,7 +1089,28 @@ export default function AdminPage() {
     }
   };
 
-  const fetchData = async () => {
+  const handleFixEnquiries = async () => {
+    setLoading(true);
+    try {
+      const token = sessionStorage.getItem('curator_token');
+      const response = await fetch('/api/admin/fix-enquiries', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Archive Restored: ' + data.message);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (e: any) {
+      alert('Archive Maintenance Failure: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     const token = sessionStorage.getItem('curator_token');
@@ -1102,7 +1161,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeView, setIsAuthenticated]);
 
   const handleStatusUpdate = async (id: string, status: string) => {
     const token = sessionStorage.getItem('curator_token');
@@ -1247,7 +1306,7 @@ export default function AdminPage() {
   const addVariant = () => {
     setFormData({
       ...formData,
-      variants: [...formData.variants, { size: '', price: 0, old_price: 0, stock: 10, refillLevel: 3 }]
+      variants: [...formData.variants, { size: '', price: 0, old_price: 0, stock: 10, refillLevel: 3, rotation: 0, modelRotation: 0, modelRotationX: 0, modelRotationZ: 0 }]
     });
   };
 
@@ -1491,6 +1550,21 @@ export default function AdminPage() {
                 style={{ background: '#111', color: '#BF953F', border: '1px solid #BF953F' }}
               >
                 {loading ? 'CLEANSING ARCHIVE...' : 'CLEANSE & BACKFILL ARCHIVE'}
+              </button>
+            </div>
+            <div className={styles.maintenanceCard} style={{ marginTop: '20px', border: '1px solid rgba(191, 149, 63, 0.4)' }}>
+              <div className={styles.maintenanceLabel}>ENQUIRY LOG REPAIR</div>
+              <h1 className={styles.maintenanceTitle}>Archive Reconstruction</h1>
+              <p className={styles.maintenanceDesc}>
+                Restore missing archival structures (sampleImage column) in the enquiry log to ensure future artifact requests are preserved with their visual references.
+              </p>
+              <button 
+                className={styles.seedBtn} 
+                onClick={handleFixEnquiries}
+                disabled={loading}
+                style={{ background: '#111', color: '#BF953F', border: '1px solid #BF953F' }}
+              >
+                {loading ? 'RECONSTRUCTING...' : 'RECONSTRUCT ENQUIRY LOG'}
               </button>
             </div>
 
@@ -1991,54 +2065,108 @@ export default function AdminPage() {
                       </div>
                       
                       <div className={styles.variantVisualsRow}>
-                        <div className={styles.variantVisualItem}>
-                          <button 
-                            type="button" 
-                            className={`${styles.variantVisualBtn} ${v.image ? styles.visualPresent : ''}`}
-                            onClick={() => {
-                              const input = document.createElement('input');
-                              input.type = 'file';
-                              input.accept = 'image/*';
-                              input.onchange = (e) => handleFileUpload(e as any, 'image', i);
-                              input.click();
-                            }}
-                          >
-                            {v.image ? '🖼️ Image Linked' : '🖼️ Add Image'}
-                          </button>
+                        <div className={styles.visualTwinGrid}>
+                          <div className={styles.visualColumn}>
+                            <span className={styles.visualLabel}>2D IMAGE ASSET</span>
+                            <div className={styles.visualControlRow}>
+                              <button 
+                                type="button" 
+                                className={`${styles.variantVisualBtn} ${v.image ? styles.visualPresent : ''}`}
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/*';
+                                  input.onchange = (e) => handleFileUpload(e as any, 'image', i);
+                                  input.click();
+                                }}
+                              >
+                                {v.image ? '🖼️ Update Image' : '🖼️ Link Image'}
+                              </button>
+                              {v.image && (
+                                <div className={styles.variantThumb}>
+                                  <img src={v.image} alt="V" />
+                                </div>
+                              )}
+                              {v.image && (
+                                <button className={styles.clearVisualsBtn} onClick={() => updateVariant(i, 'image', undefined)}>✕</button>
+                              )}
+                            </div>
+                            {v.image && (
+                              <div className={styles.variantRotationGroup}>
+                                <div className={styles.vRotateField}>
+                                  <label>Tilt: {v.rotation || 0}°</label>
+                                  <input type="range" min="-90" max="90" value={v.rotation || 0} onChange={e => updateVariant(i, 'rotation', parseFloat(e.target.value))} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className={styles.visualColumn}>
+                            <span className={styles.visualLabel}>3D MODEL ASSET</span>
+                            <div className={styles.visualControlRow}>
+                              <button 
+                                type="button" 
+                                className={`${styles.variantVisualBtn} ${v.model3d ? styles.visualPresent : ''}`}
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = '.glb';
+                                  input.onchange = (e) => handleFileUpload(e as any, 'model3d', i);
+                                  input.click();
+                                }}
+                              >
+                                {v.model3d ? '🔮 Update 3D' : '🔮 Link 3D'}
+                              </button>
+                              {v.model3d && (
+                                <button 
+                                  type="button" 
+                                  className={styles.variantInspectBtn}
+                                  onClick={() => {
+                                    setVariantPreview3d(v.model3d!);
+                                    setVariantPreviewName(`${formData.name} - ${v.size}`);
+                                  }}
+                                >
+                                  👁️ Inspect
+                                </button>
+                              )}
+                              {v.model3d && (
+                                <button className={styles.clearVisualsBtn} onClick={() => updateVariant(i, 'model3d', undefined)}>✕</button>
+                              )}
+                            </div>
+                            {v.model3d && (
+                              <div className={styles.variantRotationGroup}>
+                                <div className={styles.vRotateField}>
+                                  <label>Y: {v.modelRotation || 0}°</label>
+                                  <input type="range" min="0" max="360" value={v.modelRotation || 0} onChange={e => updateVariant(i, 'modelRotation', parseFloat(e.target.value))} />
+                                </div>
+                                <div className={styles.vRotateField}>
+                                  <label>X: {v.modelRotationX || 0}°</label>
+                                  <input type="range" min="-180" max="180" value={v.modelRotationX || 0} onChange={e => updateVariant(i, 'modelRotationX', parseFloat(e.target.value))} />
+                                </div>
+                                <div className={styles.vRotateField}>
+                                  <label>Z: {v.modelRotationZ || 0}°</label>
+                                  <input type="range" min="-180" max="180" value={v.modelRotationZ || 0} onChange={e => updateVariant(i, 'modelRotationZ', parseFloat(e.target.value))} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className={styles.variantVisualItem}>
-                          <button 
-                            type="button" 
-                            className={`${styles.variantVisualBtn} ${v.model3d ? styles.visualPresent : ''}`}
-                            onClick={() => {
-                              const input = document.createElement('input');
-                              input.type = 'file';
-                              input.accept = '.glb';
-                              input.onchange = (e) => handleFileUpload(e as any, 'model3d', i);
-                              input.click();
-                            }}
-                          >
-                            {v.model3d ? '🔮 3D Linked' : '🔮 Add 3D'}
-                          </button>
-                        </div>
-                        {(v.image || v.model3d) && (
-                          <button 
-                            type="button" 
-                            className={styles.clearVisualsBtn}
-                            onClick={() => {
-                              const newVariants = [...formData.variants];
-                              newVariants[i] = { ...newVariants[i], image: undefined, model3d: undefined };
-                              setFormData({ ...formData, variants: newVariants });
-                            }}
-                          >
-                            Clear Visuals
-                          </button>
-                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {variantPreview3d && (
+                <CinematicViewer
+                  src={variantPreview3d}
+                  name={variantPreviewName}
+                  onClose={() => setVariantPreview3d(null)}
+                  modelRotation={formData.variants.find(v => v.model3d === variantPreview3d)?.modelRotation}
+                  modelRotationX={formData.variants.find(v => v.model3d === variantPreview3d)?.modelRotationX}
+                  modelRotationZ={formData.variants.find(v => v.model3d === variantPreview3d)?.modelRotationZ}
+                />
+              )}
 
               <div className={styles.formActions}>
                 <button type="button" className={styles.cancelBtn} onClick={() => setIsModalOpen(false)}>Cancel</button>

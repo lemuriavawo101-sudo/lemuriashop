@@ -149,7 +149,8 @@ const CinematicViewer: React.FC<CinematicViewerProps> = ({ src, name, image, onC
               <pointLight position={[-10, -10, -10]} intensity={1} />
               
               <Suspense fallback={null}>
-                <Stage intensity={0.5} environment="studio" shadows="contact" adjustCamera={false}>
+                <Environment files="/environments/studio_small_03_1k.hdr" />
+                <Stage intensity={0.5} environment={undefined} shadows="contact" adjustCamera={false}>
                   <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
                     <DynamicModel src={src} modelRotation={modelRotation} modelRotationX={modelRotationX} modelRotationZ={modelRotationZ} />
                   </Float>

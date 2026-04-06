@@ -12,6 +12,7 @@ export async function uploadToGithub(
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const GITHUB_OWNER = process.env.GITHUB_OWNER;
   const GITHUB_REPO = process.env.GITHUB_REPO;
+  const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 
   if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
     throw new Error('🏺 GitHub Sanctuary is missing its credentials.');
@@ -42,6 +43,6 @@ export async function uploadToGithub(
   }
 
   // Generate the Permanent Raw URL for the storefront
-  // Format: https://raw.githubusercontent.com/{owner}/{repo}/main/{path}
-  return `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${path}`;
+  // Format: https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}
+  return `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}`;
 }

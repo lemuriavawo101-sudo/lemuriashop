@@ -94,23 +94,20 @@ const CheckoutDrawer: React.FC = () => {
         body: JSON.stringify({ 
           amount: total,
           notes: {
+            // SHORT KEYS: To evade Razorpay's 256-char note limit
             items: JSON.stringify(cartItems.map(i => ({ 
-              productId: i.id, 
-              variantSize: i.size, 
-              quantity: i.quantity, 
-              name: i.name,
-              // ABSOLUTE SANITIZATION: Vaporize any 'localhost' or '7070' traces from metadata
-              image: i.image.includes('localhost') || !i.image.startsWith('http') 
-                ? `https://${window.location.host}${i.image.replace(/http:\/\/localhost:\d+/, '')}` 
-                : i.image
+              id: i.id, 
+              s: i.size, 
+              q: i.quantity, 
+              n: i.name 
             }))),
             total: total,
             subtotal: subtotal,
             tax: tax,
             protectFee: protectFee,
             shipping: shipping,
-            customer: user?.name || 'Anonymous Practitioner',
-            delivery: JSON.stringify(delivery),
+            customer: user?.name?.substring(0, 40) || 'Anonymous Practitioner',
+            delivery: JSON.stringify(delivery).substring(0, 250), // Guard rails
             uid: user?.uid || null
           }
         })
@@ -139,7 +136,8 @@ const CheckoutDrawer: React.FC = () => {
         protectFee: protectFee,
         shipping: shipping,
         customer: user?.name || 'Anonymous Practitioner',
-        delivery: JSON.stringify(delivery)
+        delivery: JSON.stringify(delivery),
+        uid: user?.uid || null
       };
       sessionStorage.setItem('pending_acquisition', JSON.stringify(pendingData));
 

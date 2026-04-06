@@ -129,7 +129,8 @@ const VisualRotator: React.FC<VisualRotatorProps> = ({ src, initialRotation, onC
             <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2} />
             
             <Suspense fallback={null}>
-              <Stage intensity={0.5} environment="studio" shadows="contact" adjustCamera={false}>
+              <Environment files="/environments/studio_small_03_1k.hdr" />
+              <Stage intensity={0.5} environment={undefined} shadows="contact" adjustCamera={false}>
                 <Model 
                   src={src} 
                   rotation={rotation} 

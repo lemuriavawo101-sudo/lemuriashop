@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     if (variants && Array.isArray(variants)) {
       for (const v of variants) {
         await client.execute({
-          sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel, image, model3d) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel, image, model3d, rotation, modelRotation, modelRotationX, modelRotationZ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           args: [
             productId, 
             v.size || 'Standard', 
@@ -81,7 +81,11 @@ export async function POST(request: Request) {
             v.stock || 0, 
             v.refillLevel || 0, 
             v.image || null, 
-            v.model3d || null
+            v.model3d || null,
+            v.rotation || 0,
+            v.modelRotation || 0,
+            v.modelRotationX || 0,
+            v.modelRotationZ || 0
           ]
         });
       }
@@ -153,7 +157,7 @@ export async function PUT(request: Request) {
       await client.execute({ sql: 'DELETE FROM variants WHERE productId = ?', args: [id] });
       for (const v of variants) {
         await client.execute({
-          sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel, image, model3d) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          sql: 'INSERT INTO variants (productId, size, price, old_price, stock, refillLevel, image, model3d, rotation, modelRotation, modelRotationX, modelRotationZ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           args: [
             id, 
             v.size || 'Standard', 
@@ -162,7 +166,11 @@ export async function PUT(request: Request) {
             v.stock || 0, 
             v.refillLevel || 0, 
             v.image || null, 
-            v.model3d || null
+            v.model3d || null,
+            v.rotation || 0,
+            v.modelRotation || 0,
+            v.modelRotationX || 0,
+            v.modelRotationZ || 0
           ]
         });
       }

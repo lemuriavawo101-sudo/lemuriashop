@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { useGLTF, Float, Stage, Center } from '@react-three/drei';
+import { useGLTF, Float, Stage, Center, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { useFrame } from '@react-three/fiber';
@@ -114,15 +114,18 @@ const CinematicActor: React.FC<CinematicActorProps> = ({
   }, [modelRotation]);
 
   return (
-    <Stage intensity={0.8} environment="studio" shadows="contact" adjustCamera={false}>
-      <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-        <group ref={groupRef}>
-          <Center>
-            <primitive object={scene} scale={2.8} />
-          </Center>
-        </group>
-      </Float>
-    </Stage>
+    <>
+      <Environment files="/environments/studio_small_03_1k.hdr" />
+      <Stage intensity={0.8} environment={undefined} shadows="contact" adjustCamera={false}>
+        <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+          <group ref={groupRef}>
+            <Center>
+              <primitive object={scene} scale={2.8} />
+            </Center>
+          </group>
+        </Float>
+      </Stage>
+    </>
   );
 };
 

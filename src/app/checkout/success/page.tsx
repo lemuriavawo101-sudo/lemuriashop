@@ -30,37 +30,35 @@ function SuccessContent() {
 
     const verifyAndSave = async () => {
       try {
-        // 1. Verify Signature
+        // 1. Retrieve Acquisition Metadata from Cache
+        const cachedData = sessionStorage.getItem('pending_acquisition');
+        const metadata = cachedData ? JSON.parse(cachedData) : null;
+
+        // 2. Verify Signature & Persist if needed (Fallback)
         const verifyResp = await fetch('/api/razorpay/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             razorpay_order_id: orderId,
             razorpay_payment_id: paymentId,
-            razorpay_signature: signature
+            razorpay_signature: signature,
+            metadata: metadata // Pass metadata for persistence fallback
           })
         });
 
         if (!verifyResp.ok) throw new Error('Heritage verification failed.');
 
-          // 2. Retrieve Acquisition Metadata from Cache
-          const cachedData = sessionStorage.getItem('pending_acquisition');
-          if (cachedData) {
-            const acquisition = JSON.parse(cachedData);
-            setOrderData({ ...acquisition, id: paymentId });
-            
-            // 3. Persist to Global Cloud Database (Already handled by server, but we can verify)
-            // ... (Optional check if server already saved it)
-            
-            // 4. Cleanse Sanctuary Cache
-            sessionStorage.removeItem('pending_acquisition');
-          } else {
-            // High-speed fallback: Fetch from DB if cache is gone
-            const res = await fetch(`/api/orders?userId=${user?.uid}`);
-            const orders = await res.json();
-            const currentOrder = orders.find((o: any) => o.id === paymentId);
-            if (currentOrder) setOrderData(currentOrder);
-          }
+        if (metadata) {
+          setOrderData({ ...metadata, id: paymentId });
+          // Cleanse Sanctuary Cache
+          sessionStorage.removeItem('pending_acquisition');
+        } else {
+          // High-speed fallback: Fetch from DB if cache is gone
+          const res = await fetch(`/api/orders?userId=${user?.uid}`);
+          const orders = await res.json();
+          const currentOrder = orders.find((o: any) => o.id === paymentId);
+          if (currentOrder) setOrderData(currentOrder);
+        }
 
         // 5. Clear Cart locally
         clearCart();
@@ -91,6 +89,16 @@ function SuccessContent() {
               <span>Transaction ID</span>
               <strong>{paymentId}</strong>
             </div>
+            
+            <div className={styles.contactNotice} style={{ background: 'rgba(191, 149, 63, 0.1)', border: '1px solid rgba(191, 149, 63, 0.3)', padding: '1rem', borderRadius: '8px', marginTop: '1.5rem', textAlign: 'center' }}>
+              <p style={{ color: '#BF953F', margin: 0, fontWeight: '500' }}>
+                🛡️ SOON OUR TEAM WILL CONTACT YOU WITHIN 24 HOURS.
+              </p>
+              <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.3rem' }}>
+                Your order is being processed for artifact dispatch.
+              </p>
+            </div>
+
             <div className={styles.buttonGroup} style={{ display: 'flex', gap: '1rem', marginTop: '2rem', width: '100%', flexDirection: 'column' }}>
               {orderData && (
                 <button 

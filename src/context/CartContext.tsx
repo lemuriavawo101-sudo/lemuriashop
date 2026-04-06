@@ -81,10 +81,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         size: variant.size, 
         price: variant.price, 
         image: product.image, 
-        quantity: 1,
-        // THE ABSOLUTE FORGE: Final Handshake Bridge
-        callback_url: `https://lemuriashop.vercel.app/api/razorpay/verify`,
-        redirect: true, 
+        quantity: 1
       }];
     });
     
